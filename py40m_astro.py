@@ -1,5 +1,8 @@
 """ Astronomy-related routines.
 
+NOTE:
+Code that depends on pySLALIB has been commented out
+
 TODO:
 - Update docs
 - Update style
@@ -886,30 +889,30 @@ def beam_radec(target_radec, obs_time, ant=True, beam_sep=12.95, cos_el_thresh=0
             (ephem.hours(ref_ra),ephem.degrees(ref_dec)))
 
 
-def beam_radec2(target_radec, obs_time, ant=True, beam_sep=12.95):
-    (ra,dec)=target_radec
-    # convert from arcmin to an ephem.angle
-    beam_sep = ephem.degrees(beam_sep*np.pi/180.0/60.0)
+# def beam_radec2(target_radec, obs_time, ant=True, beam_sep=12.95):
+#     (ra,dec)=target_radec
+#     # convert from arcmin to an ephem.angle
+#     beam_sep = ephem.degrees(beam_sep*np.pi/180.0/60.0)
 
-    az,el = ovro40m_azel2(ra,dec, obs_time)
-    az_offset = beam_sep / np.cos(el)
-    if ant:
-        ant_az=az
-        ref_az=az-az_offset
-    else:
-        ant_az=az+az_offset
-        ref_az=az
+#     az,el = ovro40m_azel2(ra,dec, obs_time)
+#     az_offset = beam_sep / np.cos(el)
+#     if ant:
+#         ant_az=az
+#         ref_az=az-az_offset
+#     else:
+#         ant_az=az+az_offset
+#         ref_az=az
 
-    (ant,ref)= (radec_from_azel2(ant_az, el, obs_time),
-                radec_from_azel2(ref_az, el, obs_time))
+#     (ant,ref)= (radec_from_azel2(ant_az, el, obs_time),
+#                 radec_from_azel2(ref_az, el, obs_time))
 
-    if airmass(el) > 3:
-        print (el)
+#     if airmass(el) > 3:
+#         print (el)
 
-    if ref[1] < 0.24:
-        print ('fnop')
+#     if ref[1] < 0.24:
+#         print ('fnop')
 
-    return ant,ref
+#     return ant,ref
 
 
 
