@@ -14,14 +14,14 @@ Walter Max-Moerbeck, March 4, 2009.
 """
 import pickle
 import numpy
-import random
-import pylab
-import math
-import time
-import copy
+# import random
+# import pylab
+# import math
+# import time
+# import copy
 import telescope_data as tel_data
 import coord_utils as cu
-import ipynb.fs.full.region_optimizer as ro
+# import ipynb.fs.full.region_optimizer as ro
 import ipynb.fs.full.py40m_astro as pastro
 
 def load_variables(savefile):
@@ -42,6 +42,259 @@ def save_results(regions_sorted, regions_sorted_lst, savefile):
         pickle.dump(regions_sorted, file)
         pickle.dump(regions_sorted_lst, file)
     return
+
+def get_region_by_number(regions, number):
+    """ Return the region with the given Healpix number
+
+    This number will not change as new sources are added to the schedule which
+    makes it convenient to index them.
+
+    Notes
+    -----
+    Since the region splitting, number is actually a string, because
+    splitted regions get a string ID, e.g. '105a', '105b'.
+    """
+    # default value
+    region = None
+    # loop through the regions until finding it
+    for reg in regions:
+        if str(reg['number']) == str(number):
+            region = reg
+    return region
+
+def sort_regions_by_lst(regions_order, regions_order_lst, lst_start):
+    """ Sort regions by LST. Pop out the region that's there both at the beginning
+    the end of the list (new sorting routine which allows any start LST time)
+    Returns a region_order and lst vector.
+    regions_order: original order of the regions
+    regions_order_lst: original lst order of the regions
+
+    NOTES:
+    - Assumes that the wanted LST range is between 0 and 72h
+    - The final LST list will not be optimized yet because it includes
+    2 of the same regions and the other one is just popped out.
+    Therefore need to simulate the order to get the final LST list.
+
+    2012-04-20 / thovatta
+
+    """
+#    print "regions before sorting:", regions_order
+    subtracted_lst=[]
+    for lst in regions_order_lst:
+        #account for schedules where initial lst start > wanted lst start
+        if regions_order_lst[0] > (lst_start+0.5):
+            lst -= 24
+#        print 'lst before sorting', lst
+        if lst < lst_start:
+            lst += int(regions_order_lst[-1]/24)*24+24
+#        print 'lst after sorting', lst
+        subtracted_lst.append(lst)
+    # Sort the array
+    regions_sorted = list(numpy.array(regions_order)[numpy.array(subtracted_lst).argsort()])
+    # sorted_lst = list(numpy.array(subtracted_lst)[numpy.array(subtracted_lst).argsort()])
+    # print "regions after sorting:", regions_sorted, "at lst", sorted_lst
+    return regions_sorted
+
+def position_last_source_on_region(region, sources, lst):
+    """ Get the ZA/AZ for the last source on a region at a given lst
+
+    Returns za, az in degrees
+    """
+    # get name for last source in region
+    last_source = region['sources'][region['order'][-1]]
+    # get ra/dec for the source
+    ra, dec = sources[last_source]['ra'], sources[last_source]['dec']
+    # calculate za/az coordinates for lst
+    za, az = cu.radec_zaaz(ra, dec, lst)
+    return za, az
+
+def calculate_region_obstime(region, sources, lst_start, az_t):
+    """ Calculates the time taken to observe a region by taking the az wrap into
+    account. Modification of the path_obstime routine in region_optimizer.py
+    inputs:
+    region = current region to be observed
+    sources = list of sources
+    lst_start = start lst of the region
+    az_t = current az position of the telescope
+    2012-04-23 / thovatta
+    """
+    # current lst
+    lst = lst_start
+    # add slew and observing time for different sources
+    for i in range(len(region['order']) - 1):
+        # get name of the sources
+        a = region['sources'][region['order'][i]]
+        b = region['sources'][region['order'][i+1]]
+#        print 'a =', a
+#        print 'region = ', region
+#        print 'sources[a]=', sources[a]
+        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # time to observe first source and move on next one
+        # get az/za for the two sources
+        # Add observing time from source type, pointing or not
+        lst += tel_data.obs_time(sources[a]['pointing'])
+        # First source at end of the observation
+        za_a, az_a = cu.radec_zaaz(sources[a]['ra'], sources[a]['dec'], lst)
+        az_a = tel_data.move_in_azimuth(az_t, az_a)
+        # Estimate the slew time using the position of second source at
+        # end of observation first source taking the az wrap into account
+        za_b, az_b = cu.radec_zaaz(sources[b]['ra'], sources[b]['dec'], lst)
+        az_b = tel_data.move_in_azimuth(az_a, az_b)
+        # add slew time
+        lst += tel_data.slew_time(za_a, az_a, za_b, az_b)
+        # store the current az of the telescope to az b
+        az_t = az_b
+    # Add observation time for last source
+    lst += tel_data.obs_time(sources[region['sources'][region['order'][-1]]]['pointing'])
+    # return the path length
+    return lst - lst_start
+
+def report_total_time(report):
+    """ Take and observation simulation report and return total obseving time
+    in hours
+    wmax, March 23, 2012
+    """
+    # Times
+    t_obs = [row[3] for row in report]
+    t_slew = [row[4] for row in report]
+    t_wait = [row[5] for row in report]
+    # Total
+    t_total = sum(t_obs) + sum(t_wait) + sum(t_slew)
+    return t_total
+
+def report_obs_time(report):
+    """ Take an observation simulation report and return total obs time in hours
+    thovatta / 20120419
+    """
+    # Times
+    t_obs = [row[3] for row in report]
+    return sum(t_obs)
+
+def report_slew_time(report):
+    """ Take an observation simulation report and return total slew time in hours
+    thovatta / 20120419
+    """
+    # Times
+    t_slew = [row[4] for row in report]
+    return sum(t_slew)
+
+def report_wait_time(report):
+    """ Take an observation simulation report and return total wait time in hours
+    thovatta / 20120419
+    """
+    # Times
+    t_wait = [row[5] for row in report]
+    return sum(t_wait)
+
+def report_stats(report, printing=True):
+    """ Generate a series of statistics using the report from
+    simulate_regions_observation.
+    """
+    # coordinates
+    za = [row[1] for row in report]
+    az = [row[2] for row in report]
+    # times
+    t_obs = [row[3] for row in report]
+    t_slew = [row[4] for row in report]
+    t_wait = [row[5] for row in report]
+    lst = [row[6] for row in report]
+    if printing:
+        # print to standard output a report with the observations
+        print ('')
+        print ('--------------------------------------------------')
+        print ('Schedule summary')
+        print ('number lst za   az   t_obs  t_slew  t_wait')
+        print ('        h  deg  deg  h      h       h')
+        for region_line in report:
+            print ('%s\t%.5f\t%.2f\t%.2f\t%.5f\t%.5f\t%.5f' % (region_line[0],
+                                                              region_line[6],
+                                                              region_line[1],
+                                                              region_line[2],
+                                                              region_line[3],
+                                                              region_line[4],
+                                                              region_line[5]))
+        # print basic stats
+        print ('')
+        print ('--------------------------------------------------')
+        print ('total time for cycle = ',\
+            sum(t_obs) + sum(t_wait) + sum(t_slew), ' hours')
+        print ('t_obs = %.1f, t_slew = %.1f, t_wait = %.1f' % (sum(t_obs),
+                                                          sum(t_slew),
+                                                          sum(t_wait)))
+    return za, az, t_obs, t_slew, t_wait, lst
+
+def simulate_regions_final(regions,
+                           regions_order,
+                           lst_start,
+                           sources,
+                           wait=False,
+                           za_t=0.0,
+                           az_t=180.0):
+    """ Simulate a given region order
+    wait=True    Wait for regions to be observable before moving to that
+    wait=False   Just move to that position, even if not observable
+    NOTES:
+    Unlike the case for single region simulation. In this case the
+    observation times can be quite long (~1 hour), so the positions before and
+    after observation can be different.
+    Between observations it is assumed that telescope is parked at the last
+    ZAAZ
+    Added that outputs also the lst time of a region into the report
+
+    2012-04-21 / thovatta
+
+    This routine also calculates the real observing time of a region because it depends on the
+    hour angle when the region is observed (some regions have az wrap in them)
+    2012-04-22 / thovatta
+    """
+    # initialize report
+    report = []
+    # initialize time
+    lst = lst_start #% 24.0
+    # loop through all the regions
+    for i in range(len(regions_order)):
+        # get current region
+        curr_region = get_region_by_number(regions, regions_order[i])
+        # Check that region is observable or wait==False
+        # if not observable add t_wait
+        if cu.check_observability(curr_region['obs_range'], lst) or wait is False:
+            t_wait = 0.0
+        elif wait:
+            t_wait =\
+                cu.wait_time_for_observability(curr_region['obs_range'], lst)
+        # add wait time
+        lst += t_wait
+        # Change compared to other simulation function: loop through the sources
+        # in the region to get the correct slew and observing times for the region
+        # First get the slew time to the region
+        za_c, az_c = cu.radec_zaaz(curr_region['ra'], curr_region['dec'], lst)
+        #----------------------------------------
+        # New code for azimuth wrap
+        # Considering current position of telescope convert geometric to
+        # telescope coordinates with azimuth wrap incorporated
+        az_c = tel_data.move_in_azimuth(az_t, az_c)
+        #----------------------------------------
+        # Get slew time from previous telescope position and add it to lst
+        t_slew = tel_data.slew_time(za_t, az_t, za_c, az_c)
+        lst += t_slew
+        # copy the lst time as the observing lst
+        obs_lst = lst
+        # Get the observing time of that region
+        t_obs = calculate_region_obstime(curr_region, sources, lst, az_c)
+        #t_obs original from regions to compare
+        # t_obs_orig = curr_region['obstime']
+        # print 'region:', curr_region['number'], 'region[obs_time]=', t_obs_orig, 'real obs_time=', t_obs
+        lst += t_obs
+        # update telescope position at end of observation
+        # this is position for last source at the end
+        za_ls, az_ls = position_last_source_on_region(curr_region, sources, lst)
+        # telescope coordinates with azimuth wrap incorporated
+        az_ls = tel_data.move_in_azimuth(az_t, az_ls)
+        za_t, az_t = za_ls, az_ls
+        # add report line
+        report.append([curr_region['number'],
+                       za_c, az_c, t_obs, t_slew, t_wait, obs_lst])
+    return report
 
 def order_regions_slew_time(regions,
                                 sources,
@@ -135,7 +388,7 @@ def order_regions_slew_time(regions,
             regions_added = []
             regions_added_lst = []
             non_grouped_regions = regions_zero_lst[:]
-            added=0 #checking if time for 3C286 full track has been added
+            # added = 0 #checking if time for 3C286 full track has been added
              # get the region corresponding to the region_number and define the lst to be the lst when this region becomes observable
             start_region = get_region_by_number(regions, region_number)
              #lst = start_region['obs_range'][0][0]
