@@ -483,7 +483,7 @@ WMAP5_LCDM_PARAMS={
     "Omega_b":0.0456,
     "sigma_Omega_b":0.0015,
     "Omega_c":0.228,
-    "sigma_Omega_b":0.013,
+    "sigma_Omega_c":0.013,
     "Omega_M":0.0456+0.228, # Omega_b+Omega_c
     "sigma_Omega_M":np.sqrt(0.0015**2+0.013**2), # sigma(Omega_b+Omega_c)
     "Omega_Lambda":0.726,
