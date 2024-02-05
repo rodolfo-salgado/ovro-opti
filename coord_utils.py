@@ -56,7 +56,7 @@ def radec_zaaz(ra, dec, lst):
     dec = dec * np.pi / 180
     # za in radians
     za = np.pi / 2 - \
-        np.asin(np.cos(lha) * np.cos(dec) * np.cos(lat) + \
+        np.arcsin(np.cos(lha) * np.cos(dec) * np.cos(lat) + \
                       np.sin(dec) * np.sin(lat))
     # az in radians. -180 < atan2 < 180. But 0 < az < 360
     az = np.arctan2(-np.sin(lha) * np.cos(dec), \
