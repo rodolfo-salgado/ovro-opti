@@ -725,17 +725,14 @@ def modify_path_keep_cal(regions,
     return regions_order_mod, t_total, delta
 
 def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion, prob_mutacion, num_generaciones):
-
-    """
-    Esta función está implementada para aplicar algoritmo genético, buscando minimizar t_wait, t_slew y t_obs.
+    """Esta función está implementada para aplicar algoritmo genético,
+    buscando minimizar t_wait, t_slew y t_obs.
 
     Antonia Bravo Rojo, Dic 20, 2023.
     """
     t0 = time.time()
-
     # report = simulate_regions_final(regions, order_opt, lst_start, sources, wait=True)   #entrega [region_number,za_c, az_c, t_obs, t_slew, t_wait, obs_lst]
     # minimum_obstime = report_obs_time(report)
-
     # Creating a random starting population
     unique_order_opt = list(dict.fromkeys(order_opt))
     # N = len(order_opt)
@@ -767,36 +764,29 @@ def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion,
             if (new_t_obs + new_t_slew + new_t_wait)<88:
                 # minimum_obstime = new_t_obs
                 order_opt = new_order
-
         nueva_poblacion = order_opt[:]
         while len(nueva_poblacion) < tam_poblacion:
-
             padre1, padre2 = random.sample(poblacion[:int(0.5*tam_poblacion)], 2)
             punto_cruce = random.randint(0, M)
             hijo = padre1[:punto_cruce] + [x for x in padre2 if x not in padre1[:punto_cruce]]
-
             if random.random() < prob_mutacion:
                 idx1, idx2 = random.sample(range(0,M), 2)
                 hijo[idx1], hijo[idx2] = hijo[idx2], hijo[idx1]
             nueva_poblacion.append(hijo)
-
             nuevo_orden = nueva_poblacion[-1]
             nuevo_report = simulate_regions_final(regions, nuevo_orden, lst_start, sources, wait=True)
             nuevo_t_obs = report_wait_time(nuevo_report)
             nuevo_t_wait = report_wait_time(nuevo_report)
             nuevo_t_slew = report_slew_time(nuevo_report)
-
             #if nuevo_t_obs < minimum_obstime:
             #if nuevo_t_obs < minimum_obstime and (nuevo_t_slew + nuevo_t_wait)<15:
             if (nuevo_t_obs + nuevo_t_slew + nuevo_t_wait)<88:
                 # minimum_obstime = nuevo_t_obs
                 order_opt = nuevo_orden
-
     #print( 'Final length = ', minimum_obstime)
     print( 'optimum travel order =  ', order_opt)
     print( 'estamos trabajando con n° de fuentes igual a ', len(order_opt))
     print( '  \n')
-
     final_report = simulate_regions_final(regions, order_opt, lst_start, sources, wait=True)
     t_obs = report_obs_time(final_report)
     t_wait = report_wait_time(final_report)
@@ -805,8 +795,6 @@ def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion,
     print( 't_slew = ', t_slew)
     print( 't_wait = ', t_wait)
     print( '  \n')
-
     tf = time.time()
     print('time taken:', (tf-t0)/60, 'min')
-
     return order_opt
