@@ -546,7 +546,7 @@ def comoving_coord_distance_LCDM(z,
                                  H0=LCDM_PARAMS["H0"]/c_km_per_s,
                                  dH0=LCDM_PARAMS["sigma_H0"]/c_km_per_s,
                                  q0=None):
-    """Compute the comoving coordinate distance in Mpc for a flat, Lambda-CDM universe.
+    r"""Compute the comoving coordinate distance in Mpc for a flat, Lambda-CDM universe.
 
     Arguments:
 
