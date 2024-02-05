@@ -355,8 +355,9 @@ def simulate_regions_final(regions,
         t_obs = calculate_region_obstime(curr_region, sources, lst, az_c)
         #t_obs original from regions to compare
         print(f'Region: {curr_region['number']}', \
-            'Obs time: {curr_region[obs_time]} (saved)',
-            '{t_obs} (real)', sep='\t')
+            f'Obs time: {curr_region['obstime']:.5f} (saved)',
+            f'{t_obs:.5f} (real)\t'
+            f'{(t_obs - curr_region['obstime']):.5f} (delta)', sep='\t')
         lst += t_obs
         # update telescope position at end of observation
         # this is position for last source at the end
