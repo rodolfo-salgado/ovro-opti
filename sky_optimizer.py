@@ -223,6 +223,78 @@ def report_stats(report, printing=True):
                                                           sum(t_wait)))
     return za, az, t_obs, t_slew, t_wait, lst
 
+def simulate_regions_observation(regions,
+                                 regions_order,
+                                 lst_start,
+                                 sources,
+                                 wait=False,
+                                 za_t=0.0,
+                                 az_t=180.0):
+    """ Simulate a given region order
+
+    wait=True    Wait for regions to be observable before moving to that
+                 position
+    wait=False   Just move to that position, even if not observable
+
+    NOTE:
+    Unlike the case for single region simulation. In this case the
+    observation times can be quite long (~1 hour), so the positions before and
+    after observation can be different.
+
+    Between observations it is assumed that telescope is parked at the last
+    ZAAZ
+
+    Added that outputs also the lst time of a region into the report
+    2012-04-21 / thovatta
+    """
+    # initialize report
+    report = []
+    # initialize time
+    lst = lst_start % 24.0
+    # loop through all the regions
+    for i in range(len(regions_order)):
+        # get current region
+        curr_region = get_region_by_number(regions, regions_order[i])
+        # Check that region is observable or wait==False
+        # if not observable add t_wait
+        if cu.check_observability(curr_region['obs_range'], lst) or wait is False:
+            t_wait = 0.0
+        elif wait:
+            t_wait =\
+                cu.wait_time_for_observability(curr_region['obs_range'], lst)
+        # add wait time
+        lst += t_wait
+        # Get position at begining observation
+        za_c, az_c = cu.radec_zaaz(curr_region['ra'], curr_region['dec'], lst)
+        #----------------------------------------
+        # New code for azimuth wrap
+        # Considering current position of telescope convert geometric to
+        # telescope coordinates with azimuth wrap incorporated
+        az_c = tel_data.move_in_azimuth(az_t, az_c)
+        #----------------------------------------
+        # Get slew time from previous telescope position and add it to lst
+        t_slew = tel_data.slew_time(za_t, az_t, za_c, az_c)
+        lst += t_slew
+        # copy the lst time as the observing lst
+        obs_lst = lst
+        # Add observation time
+        t_obs = curr_region['obstime']
+        lst += t_obs
+        # update telescope position at end of observation
+        # this is position for last source at the end
+        za_ls, az_ls = position_last_source_on_region(curr_region, sources, lst)
+        #----------------------------------------
+        # New code for azimuth wrap
+        # Considering current position of telescope convert geometric to
+        # telescope coordinates with azimuth wrap incorporated
+        az_ls = tel_data.move_in_azimuth(az_t, az_ls)
+        #----------------------------------------
+        za_t, az_t = za_ls, az_ls
+        # add report line
+        report.append([curr_region['number'],
+                       za_c, az_c, t_obs, t_slew, t_wait, obs_lst])
+    return report
+
 def simulate_regions_final(regions,
                            regions_order,
                            lst_start,
@@ -282,8 +354,9 @@ def simulate_regions_final(regions,
         # Get the observing time of that region
         t_obs = calculate_region_obstime(curr_region, sources, lst, az_c)
         #t_obs original from regions to compare
-        # t_obs_orig = curr_region['obstime']
-        # print 'region:', curr_region['number'], 'region[obs_time]=', t_obs_orig, 'real obs_time=', t_obs
+        print(f'Region: {curr_region['number']}', \
+            'Obs time: {curr_region[obs_time]} (saved)',
+            '{t_obs} (real)', sep='\t')
         lst += t_obs
         # update telescope position at end of observation
         # this is position for last source at the end
@@ -584,78 +657,6 @@ def order_regions_slew_time(regions,
                 min_lst_start = initial_start_lst
         lst_start += 1
     return min_order, min_total_time, min_order_lst, min_lst_start
-
-def simulate_regions_observation(regions,
-                                 regions_order,
-                                 lst_start,
-                                 sources,
-                                 wait=False,
-                                 za_t=0.0,
-                                 az_t=180.0):
-    """ Simulate a given region order
-
-    wait=True    Wait for regions to be observable before moving to that
-                 position
-    wait=False   Just move to that position, even if not observable
-
-    NOTE:
-    Unlike the case for single region simulation. In this case the
-    observation times can be quite long (~1 hour), so the positions before and
-    after observation can be different.
-
-    Between observations it is assumed that telescope is parked at the last
-    ZAAZ
-
-    Added that outputs also the lst time of a region into the report
-    2012-04-21 / thovatta
-    """
-    # initialize report
-    report = []
-    # initialize time
-    lst = lst_start % 24.0
-    # loop through all the regions
-    for i in range(len(regions_order)):
-        # get current region
-        curr_region = get_region_by_number(regions, regions_order[i])
-        # Check that region is observable or wait==False
-        # if not observable add t_wait
-        if cu.check_observability(curr_region['obs_range'], lst) or wait is False:
-            t_wait = 0.0
-        elif wait:
-            t_wait =\
-                cu.wait_time_for_observability(curr_region['obs_range'], lst)
-        # add wait time
-        lst += t_wait
-        # Get position at begining observation
-        za_c, az_c = cu.radec_zaaz(curr_region['ra'], curr_region['dec'], lst)
-        #----------------------------------------
-        # New code for azimuth wrap
-        # Considering current position of telescope convert geometric to
-        # telescope coordinates with azimuth wrap incorporated
-        az_c = tel_data.move_in_azimuth(az_t, az_c)
-        #----------------------------------------
-        # Get slew time from previous telescope position and add it to lst
-        t_slew = tel_data.slew_time(za_t, az_t, za_c, az_c)
-        lst += t_slew
-        # copy the lst time as the observing lst
-        obs_lst = lst
-        # Add observation time
-        t_obs = curr_region['obstime']
-        lst += t_obs
-        # update telescope position at end of observation
-        # this is position for last source at the end
-        za_ls, az_ls = position_last_source_on_region(curr_region, sources, lst)
-        #----------------------------------------
-        # New code for azimuth wrap
-        # Considering current position of telescope convert geometric to
-        # telescope coordinates with azimuth wrap incorporated
-        az_ls = tel_data.move_in_azimuth(az_t, az_ls)
-        #----------------------------------------
-        za_t, az_t = za_ls, az_ls
-        # add report line
-        report.append([curr_region['number'],
-                       za_c, az_c, t_obs, t_slew, t_wait, obs_lst])
-    return report
 
 def modify_path_keep_cal(regions,
                 regions_order,
