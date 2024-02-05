@@ -200,13 +200,12 @@ def report_stats(report, printing=True):
     lst = [row[6] for row in report]
     if printing:
         # print to standard output a report with the observations
-        print ('')
-        print ('--------------------------------------------------')
-        print ('Schedule summary')
-        print ('number lst za   az   t_obs  t_slew  t_wait')
-        print ('        h  deg  deg  h      h       h')
+        print('--------------------------------------------------')
+        print('Schedule summary')
+        print('number lst za   az   t_obs  t_slew  t_wait')
+        print('        h  deg  deg  h      h       h')
         for region_line in report:
-            print ('%s\t%.5f\t%.2f\t%.2f\t%.5f\t%.5f\t%.5f' % (region_line[0],
+            print('%s\t%.5f\t%.2f\t%.2f\t%.5f\t%.5f\t%.5f' % (region_line[0],
                                                               region_line[6],
                                                               region_line[1],
                                                               region_line[2],
@@ -214,11 +213,11 @@ def report_stats(report, printing=True):
                                                               region_line[4],
                                                               region_line[5]))
         # print basic stats
-        print ('')
-        print ('--------------------------------------------------')
-        print ('total time for cycle = ',\
+        print()
+        print('--------------------------------------------------')
+        print('total time for cycle = ',\
             sum(t_obs) + sum(t_wait) + sum(t_slew), ' hours')
-        print ('t_obs = %.1f, t_slew = %.1f, t_wait = %.1f' % (sum(t_obs),
+        print('t_obs = %.1f, t_slew = %.1f, t_wait = %.1f' % (sum(t_obs),
                                                           sum(t_slew),
                                                           sum(t_wait)))
     return za, az, t_obs, t_slew, t_wait, lst
@@ -353,11 +352,10 @@ def simulate_regions_final(regions,
         obs_lst = lst
         # Get the observing time of that region
         t_obs = calculate_region_obstime(curr_region, sources, lst, az_c)
-        #t_obs original from regions to compare
-        print(f'Region: {curr_region['number']}', \
-            f'Obs time: {curr_region['obstime']:.5f} (saved)',
-            f'{t_obs:.5f} (real)\t'
-            f'{(t_obs - curr_region['obstime']):.5f} (delta)', sep='\t')
+        # print(f'Region: {curr_region['number']}', \
+        #     f'Obs time: {curr_region['obstime']:.5f} (saved)',
+        #     f'{t_obs:.5f} (real)\t'
+        #     f'{(t_obs - curr_region['obstime']):.5f} (delta)', sep='\t')
         lst += t_obs
         # update telescope position at end of observation
         # this is position for last source at the end
