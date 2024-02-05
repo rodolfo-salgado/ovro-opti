@@ -3,6 +3,7 @@
 TODO:
 - Update docs
 - Update style
+- Fix pyslalib-dependent code
 """
 
 from warnings import warn
@@ -11,7 +12,7 @@ import ephem
 import numpy as np
 from scipy.integrate import quad
 
-import ipynb.fs.full.py40m_calendar as pcal
+import py40m_calendar as pcal
 
 #from pyslalib import slalib
 
@@ -62,30 +63,30 @@ def ovro40m_azza(body, time, pressure=None, temp=None):
     return (az*180.0/np.pi, 90.0-el*180.0/np.pi)
 
 
-def ovro40m_azel2(ra, dec, utc, pressure=None, temp=None):
-    mjd=pcal.get_mjd(utc)
-    dtt = slalib.sla_dtt(mjd) # offset to convert UTC to terrestrial (dynamical) time
-    # get apparent ra/dec
-    ra,da = slalib.sla_map(rm=ra, dm=dec,
-                           pr=0, pd=0, # no proper motion
-                           px=0, # no parallax
-                           rv=0, # no radial velocity
-                           eq=2000.0,
-                           date=mjd+dtt)
-    # now get observed
-    ao,zo,ho,do,ro = slalib.sla_aop(rap=ra, dap=da,
-                                    date=mjd,
-                                    dut=0, # ignoring for now
-                                    elongm=float(ephem.degrees(OVRO_LONGITUDE)),
-                                    phim=float(ephem.degrees(OVRO_LATITUDE)),
-                                    hm=OVRO_ELEVATION,
-                                    xp=0, yp=0, # ignoring polar motion
-                                    tdk=293.15, # assume this
-                                    pmb=865.0, # assume this
-                                    rh=0.2, # assume this
-                                    wl=2.0e4, # 2cm in um
-                                    tlr=0)
-    return ao, np.pi/2-zo
+# def ovro40m_azel2(ra, dec, utc, pressure=None, temp=None):
+#     mjd=pcal.get_mjd(utc)
+#     dtt = slalib.sla_dtt(mjd) # offset to convert UTC to terrestrial (dynamical) time
+#     # get apparent ra/dec
+#     ra,da = slalib.sla_map(rm=ra, dm=dec,
+#                            pr=0, pd=0, # no proper motion
+#                            px=0, # no parallax
+#                            rv=0, # no radial velocity
+#                            eq=2000.0,
+#                            date=mjd+dtt)
+#     # now get observed
+#     ao,zo,ho,do,ro = slalib.sla_aop(rap=ra, dap=da,
+#                                     date=mjd,
+#                                     dut=0, # ignoring for now
+#                                     elongm=float(ephem.degrees(OVRO_LONGITUDE)),
+#                                     phim=float(ephem.degrees(OVRO_LATITUDE)),
+#                                     hm=OVRO_ELEVATION,
+#                                     xp=0, yp=0, # ignoring polar motion
+#                                     tdk=293.15, # assume this
+#                                     pmb=865.0, # assume this
+#                                     rh=0.2, # assume this
+#                                     wl=2.0e4, # 2cm in um
+#                                     tlr=0)
+#     return ao, np.pi/2-zo
 
 
 def ovro40m_azel(body, time, pressure=None, temp=None):
@@ -198,31 +199,31 @@ def radec_from_azel(az, el, lst, lat=ephem.degrees(OVRO_LATITUDE)):
     return (ra, dec)
 
 
-def radec_from_azel2(az, el, utc, long=float(ephem.degrees(OVRO_LONGITUDE)),
-                     lat=float(ephem.degrees(OVRO_LATITUDE)), elev=OVRO_ELEVATION):
-    mjd=pcal.get_mjd(utc)
-    # get apparent coordinates
-    rap,dap = slalib.sla_oap(type_bn='a',
-                             ob1=az, ob2=np.pi/2-el,
-                             date=mjd,
-                             dut=0, # ignore for now, should use MJD-based LUT
-                             elongm=long,
-                             phim=lat,
-                             hm=elev,
-                             xp=0, yp=0, # ignore polar motion, could also get from IERS table
-                             tdk=293.15,
-                             pmb=865, # assumed, typical value in mbar
-                             rh=0.2, # assumed, typical value in fraction
-                             wl=2.0e4, # 2cm in um
-                             tlr=0) # use example 0.0065 K/m instead?
-    # now get mean J2000 coordinates
-    dtt = slalib.sla_dtt(mjd) # offset to convert UTC to terrestrial (dynamical) time
-    rm,dm = slalib.sla_amp(ra=rap, da=dap,
-                           date=mjd+dtt,
-                           eq=2000)
-    if rm >= 2*np.pi:
-        rm -= 2*np.pi
-    return ephem.hours(rm), ephem.degrees(dm)
+# def radec_from_azel2(az, el, utc, long=float(ephem.degrees(OVRO_LONGITUDE)),
+#                      lat=float(ephem.degrees(OVRO_LATITUDE)), elev=OVRO_ELEVATION):
+#     mjd=pcal.get_mjd(utc)
+#     # get apparent coordinates
+#     rap,dap = slalib.sla_oap(type_bn='a',
+#                              ob1=az, ob2=np.pi/2-el,
+#                              date=mjd,
+#                              dut=0, # ignore for now, should use MJD-based LUT
+#                              elongm=long,
+#                              phim=lat,
+#                              hm=elev,
+#                              xp=0, yp=0, # ignore polar motion, could also get from IERS table
+#                              tdk=293.15,
+#                              pmb=865, # assumed, typical value in mbar
+#                              rh=0.2, # assumed, typical value in fraction
+#                              wl=2.0e4, # 2cm in um
+#                              tlr=0) # use example 0.0065 K/m instead?
+#     # now get mean J2000 coordinates
+#     dtt = slalib.sla_dtt(mjd) # offset to convert UTC to terrestrial (dynamical) time
+#     rm,dm = slalib.sla_amp(ra=rap, da=dap,
+#                            date=mjd+dtt,
+#                            eq=2000)
+#     if rm >= 2*np.pi:
+#         rm -= 2*np.pi
+#     return ephem.hours(rm), ephem.degrees(dm)
 
 
 def sky_sep(ra1, dec1, ra2, dec2):
@@ -269,9 +270,9 @@ def parallactic_angle(ra, dec, observer=None, date=None):
 
 
 
-def parallactic_angle_slalib(ra, dec, lst, lat):
-    pa = slalib.sla_pa(lst-ra, dec, lat)
-    return pa
+# def parallactic_angle_slalib(ra, dec, lst, lat):
+#     pa = slalib.sla_pa(lst-ra, dec, lat)
+#     return pa
 
 
 def parallactic_angle_lst(ra, dec, lst, lat):
