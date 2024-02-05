@@ -14,10 +14,10 @@ Walter Max-Moerbeck, March 4, 2009.
 """
 import pickle
 import numpy
-# import random
+import random
 # import pylab
 # import math
-# import time
+import time
 # import copy
 import telescope_data as tel_data
 import coord_utils as cu
@@ -584,3 +584,229 @@ def order_regions_slew_time(regions,
                 min_lst_start = initial_start_lst
         lst_start += 1
     return min_order, min_total_time, min_order_lst, min_lst_start
+
+def simulate_regions_observation(regions,
+                                 regions_order,
+                                 lst_start,
+                                 sources,
+                                 wait=False,
+                                 za_t=0.0,
+                                 az_t=180.0):
+    """ Simulate a given region order
+
+    wait=True    Wait for regions to be observable before moving to that
+                 position
+    wait=False   Just move to that position, even if not observable
+
+    NOTE:
+    Unlike the case for single region simulation. In this case the
+    observation times can be quite long (~1 hour), so the positions before and
+    after observation can be different.
+
+    Between observations it is assumed that telescope is parked at the last
+    ZAAZ
+
+    Added that outputs also the lst time of a region into the report
+    2012-04-21 / thovatta
+    """
+    # initialize report
+    report = []
+    # initialize time
+    lst = lst_start % 24.0
+    # loop through all the regions
+    for i in range(len(regions_order)):
+        # get current region
+        curr_region = get_region_by_number(regions, regions_order[i])
+        # Check that region is observable or wait==False
+        # if not observable add t_wait
+        if cu.check_observability(curr_region['obs_range'], lst) or wait is False:
+            t_wait = 0.0
+        elif wait:
+            t_wait =\
+                cu.wait_time_for_observability(curr_region['obs_range'], lst)
+        # add wait time
+        lst += t_wait
+        # Get position at begining observation
+        za_c, az_c = cu.radec_zaaz(curr_region['ra'], curr_region['dec'], lst)
+        #----------------------------------------
+        # New code for azimuth wrap
+        # Considering current position of telescope convert geometric to
+        # telescope coordinates with azimuth wrap incorporated
+        az_c = tel_data.move_in_azimuth(az_t, az_c)
+        #----------------------------------------
+        # Get slew time from previous telescope position and add it to lst
+        t_slew = tel_data.slew_time(za_t, az_t, za_c, az_c)
+        lst += t_slew
+        # copy the lst time as the observing lst
+        obs_lst = lst
+        # Add observation time
+        t_obs = curr_region['obstime']
+        lst += t_obs
+        # update telescope position at end of observation
+        # this is position for last source at the end
+        za_ls, az_ls = position_last_source_on_region(curr_region, sources, lst)
+        #----------------------------------------
+        # New code for azimuth wrap
+        # Considering current position of telescope convert geometric to
+        # telescope coordinates with azimuth wrap incorporated
+        az_ls = tel_data.move_in_azimuth(az_t, az_ls)
+        #----------------------------------------
+        za_t, az_t = za_ls, az_ls
+        # add report line
+        report.append([curr_region['number'],
+                       za_c, az_c, t_obs, t_slew, t_wait, obs_lst])
+    return report
+
+def modify_path_keep_cal(regions,
+                regions_order,
+                lst_start,
+                sources,
+                wait=False,
+                za_t=0.0,
+                az_t=180.0,
+                cal_list = ['136', '137', '138', '139', '140', '141', '142']):
+    """ Similar to modify_path but keeps the calibration regions intact. Needs a list of regions not to swap
+        as an input.
+        thovatta / 20120420
+    """
+    # Make a copy of regions order to modify without touching original
+    regions_order_opt = regions_order[:]
+    # Simulate orginal path and get total lenght
+    report = simulate_regions_observation(regions,
+                                          regions_order,
+                                          lst_start,
+                                          sources,
+                                          wait=True,
+                                          za_t=za_t,
+                                          az_t=az_t)
+    t_total_i = report_total_time(report)
+    # Make a copy of current best solution
+    regions_order_mod = regions_order_opt[:]
+    cal_index = []
+    #go through the regions and cal_list to find the corresponding indices
+    for i in range(len(regions_order)):
+        for cal in cal_list:
+            if regions_order[i] == cal:
+                cal_index.append(i)
+                #print 'cal region', cal, 'at index', i
+    # Swap the order of two regions leaving first region fixed and make sure that the swap numbers are not any
+    # of the cal sources or the first and last source in the list which are set by the LST start time
+    i_swap = [0,0]
+    cal_check = 1
+    cal_check_source = 0
+    while cal_check:
+        i_swap = random.sample(range(1, len(regions_order_mod)), 2)
+        for i in cal_index:
+            if i_swap[0] == i or i_swap[1] == i:
+                cal_check_source = 1
+        if i_swap[0] == 0 or i_swap[1] == 0 or\
+                    i_swap[0] == len(regions_order_mod) or i_swap[1] == len(regions_order_mod) or\
+                    i_swap[0] == i_swap[1] or\
+                    cal_check_source == 1:
+            cal_check = 1
+            cal_check_source = 0
+        else:
+            cal_check = 0
+    #print 'iswap = ', i_swap
+    regions_1 = regions_order_mod[i_swap[0]]
+    regions_order_mod[i_swap[0]] = regions_order_mod[i_swap[1]]
+    regions_order_mod[i_swap[1]] = regions_1
+    # Simulate and evaluate time
+    report  = simulate_regions_observation(regions,
+                                           regions_order_mod,
+                                           lst_start,
+                                           sources,
+                                           wait=True,
+                                           za_t=za_t,
+                                           az_t=az_t)
+    t_total = report_total_time(report)
+    #print 'iswap vals = ', i_swap
+    delta = t_total - t_total_i
+    return regions_order_mod, t_total, delta
+
+def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion, prob_mutacion, num_generaciones):
+
+    """
+    Esta función está implementada para aplicar algoritmo genético, buscando minimizar t_wait, t_slew y t_obs.
+
+    Antonia Bravo Rojo, Dic 20, 2023.
+    """
+    t0 = time.time()
+
+    # report = simulate_regions_final(regions, order_opt, lst_start, sources, wait=True)   #entrega [region_number,za_c, az_c, t_obs, t_slew, t_wait, obs_lst]
+    # minimum_obstime = report_obs_time(report)
+
+    # Creating a random starting population
+    unique_order_opt = list(dict.fromkeys(order_opt))
+    # N = len(order_opt)
+    M = len(unique_order_opt) #136 porque no considera las regiones 110 y 125.
+    poblacion = []
+    for _ in range(tam_poblacion):
+        updated_regions, updated_time, delta =\
+                                        modify_path_keep_cal(regions,
+                                                       unique_order_opt,
+                                                       lst_start,
+                                                       sources,
+                                                       wait=True,
+                                                       za_t=0.0,
+                                                       az_t=180.0)
+        poblacion.append(updated_regions)
+    for generacion in range(num_generaciones):
+        for i in range(len(poblacion)):
+            new_order = poblacion[i]
+            new_report = simulate_regions_final(regions, new_order, lst_start, sources, wait=True)
+
+            new_t_obs = report_obs_time(new_report)
+            new_t_wait = report_wait_time(new_report)
+            new_t_slew = report_slew_time(new_report)
+
+            #if obstime is reduced we have new optimum and others new conditions
+
+            #if new_t_obs < minimum_obstime:
+            #if new_t_obs < minimum_obstime and (new_t_slew + new_t_wait)<15:
+            if (new_t_obs + new_t_slew + new_t_wait)<88:
+                # minimum_obstime = new_t_obs
+                order_opt = new_order
+
+        nueva_poblacion = order_opt[:]
+        while len(nueva_poblacion) < tam_poblacion:
+
+            padre1, padre2 = random.sample(poblacion[:int(0.5*tam_poblacion)], 2)
+            punto_cruce = random.randint(0, M)
+            hijo = padre1[:punto_cruce] + [x for x in padre2 if x not in padre1[:punto_cruce]]
+
+            if random.random() < prob_mutacion:
+                idx1, idx2 = random.sample(range(0,M), 2)
+                hijo[idx1], hijo[idx2] = hijo[idx2], hijo[idx1]
+            nueva_poblacion.append(hijo)
+
+            nuevo_orden = nueva_poblacion[-1]
+            nuevo_report = simulate_regions_final(regions, nuevo_orden, lst_start, sources, wait=True)
+            nuevo_t_obs = report_wait_time(nuevo_report)
+            nuevo_t_wait = report_wait_time(nuevo_report)
+            nuevo_t_slew = report_slew_time(nuevo_report)
+
+            #if nuevo_t_obs < minimum_obstime:
+            #if nuevo_t_obs < minimum_obstime and (nuevo_t_slew + nuevo_t_wait)<15:
+            if (nuevo_t_obs + nuevo_t_slew + nuevo_t_wait)<88:
+                # minimum_obstime = nuevo_t_obs
+                order_opt = nuevo_orden
+
+    #print( 'Final length = ', minimum_obstime)
+    print( 'optimum travel order =  ', order_opt)
+    print( 'estamos trabajando con n° de fuentes igual a ', len(order_opt))
+    print( '  \n')
+
+    final_report = simulate_regions_final(regions, order_opt, lst_start, sources, wait=True)
+    t_obs = report_obs_time(final_report)
+    t_wait = report_wait_time(final_report)
+    t_slew = report_slew_time(final_report)
+    print( 't_obs = ', t_obs)
+    print( 't_slew = ', t_slew)
+    print( 't_wait = ', t_wait)
+    print( '  \n')
+
+    tf = time.time()
+    print('time taken:', (tf-t0)/60, 'min')
+
+    return order_opt
