@@ -381,7 +381,7 @@ def order_regions_slew_time(regions,
                         cu.check_observability(region['obs_range'],
                                                lst_start + lst_obs_win + region['obstime']):
                 regions_order.append(region['number'])
-        print ('regions observable at lst =', lst_start, 'are:', regions_order)
+        print('regions observable at lst =', lst_start, 'are:', regions_order)
         # by starting at each region, go through other regions selecting always the shortest slew time
         # loop through the regions
         for region_number in regions_order:
