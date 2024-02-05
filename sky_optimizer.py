@@ -389,28 +389,28 @@ def order_regions_slew_time(regions,
             regions_added_lst = []
             non_grouped_regions = regions_zero_lst[:]
             # added = 0 #checking if time for 3C286 full track has been added
-             # get the region corresponding to the region_number and define the lst to be the lst when this region becomes observable
+            # get the region corresponding to the region_number and define the lst to be the lst when this region becomes observable
             start_region = get_region_by_number(regions, region_number)
-             #lst = start_region['obs_range'][0][0]
+            #lst = start_region['obs_range'][0][0]
             lst = lst_start
-             # simulate observation to check feasibility
-             # region position at begining of observation
+            # simulate observation to check feasibility
+            # region position at begining of observation
             za_r, az_r =\
                   cu.radec_zaaz(start_region['ra'], start_region['dec'], lst)
-             # Consider azimuth wrap
+            # Consider azimuth wrap
             az_r = tel_data.move_in_azimuth(az_t, az_r)
-             # slew time from previous telescope position
+            # slew time from previous telescope position
             t_slew_region = tel_data.slew_time(za_t, az_t, za_r, az_r)
-             # observation time
-             #t_obs_region = start_region['obstime']
+            # observation time
+            #t_obs_region = start_region['obstime']
             t_obs_region = calculate_region_obstime(start_region, sources, lst+t_slew_region, az_r)
-             #update lst
+            #update lst
             lst = lst + t_slew_region
-             #lst_start = lst - t_slew_region
-             #if region_number == 45:
-#            print 'start lst =', lst_start, 'lst=', lst, 'slew = ', t_slew_region, 'range =', start_region['obs_range'], 't_obs = ', t_obs_region
-             #the first region must be observable so add into regions_added and take away from regions left
-             #check if this is cal region
+            #lst_start = lst - t_slew_region
+            #if region_number == 45:
+            # print 'start lst =', lst_start, 'lst=', lst, 'slew = ', t_slew_region, 'range =', start_region['obs_range'], 't_obs = ', t_obs_region
+            #the first region must be observable so add into regions_added and take away from regions left
+            #check if this is cal region
             if region_number in daily_regions_numbers:
                 regions_added.append(start_region['number'])
                 regions_added_lst.append(lst)
@@ -433,20 +433,20 @@ def order_regions_slew_time(regions,
                     position_last_source_on_region(start_region,
                                                    sources,
                                                    lst)
-             # Considering current position of telescope convert geometric to
-             # telescope coordinates with azimuth wrap incorporated
+            # Considering current position of telescope convert geometric to
+            # telescope coordinates with azimuth wrap incorporated
             az_ls = tel_data.move_in_azimuth(az_t, az_ls)
             za_t, az_t = za_ls, az_ls
-             #go through the remaining regions by adding the smallest slew time one as the next region
+            # go through the remaining regions by adding the smallest slew time one as the next region
             while non_grouped_regions:
-#               #Code that was used to see if 3C286 long track can somehow be automatically added. Could not get to work.
-#                #check if LST is close to 8:30 LST when 3C286 should be started, only if start_lst != 0
-#                print "initial start lst=", initial_start_lst, "added=", added, "lst=",lst
-#                if initial_start_lst != 0 and added == 0 and ((lst > 8 and lst < 9) or (lst > 32 and lst < 33)):
-#                    print "adding time for 3C286 at lst", lst
-#                    lst += 10 #add the amount of time required to observe 3C286
-#                    added=1
-#                    print "new lst=", lst
+                # #Code that was used to see if 3C286 long track can somehow be automatically added. Could not get to work.
+                # #check if LST is close to 8:30 LST when 3C286 should be started, only if start_lst != 0
+                # print("initial start lst=", initial_start_lst, "added=", added, "lst=",lst)
+                # if initial_start_lst != 0 and added == 0 and ((lst > 8 and lst < 9) or (lst > 32 and lst < 33)):
+                #     print("adding time for 3C286 at lst", lst)
+                #     lst += 10 #add the amount of time required to observe 3C286
+                #     added = 1
+                #     print("new lst=", lst)
                 observable_regions = []
                 observable_regions_slew = []
                 # loop through the regions
@@ -467,12 +467,12 @@ def order_regions_slew_time(regions,
                         t_slew_region = tel_data.slew_time(za_t, az_t, za_r, az_r)
                         observable_regions_slew.append(t_slew_region)
                         observable_regions.append(region_index)
-#                print "observable regions at lst", lst, "are", observable_regions
-                  # if no region is observable, advance time by a bit and goes to next cycle
+                print("observable regions at lst", lst, "are", observable_regions)
+                # if no region is observable, advance time by a bit and goes to next cycle
                 if len(observable_regions) == 0:
                     lst += delta_lst
                     continue
-                 # sort regions by slew time and get the region with shortest slew time
+                # sort regions by slew time and get the region with shortest slew time
                 index = numpy.array(observable_regions_slew).argsort()
                 observable_regions = list(numpy.array(observable_regions)[index])
                 region_index = observable_regions[0]
@@ -485,19 +485,19 @@ def order_regions_slew_time(regions,
                           cu.radec_zaaz(region['ra'], region['dec'], lst)
                  # Consider azimuth wrap
                 az_r = tel_data.move_in_azimuth(az_t, az_r)
-               # slew time from previous telescope position
+                # slew time from previous telescope position
                 t_slew_region = tel_data.slew_time(za_t, az_t, za_r, az_r)
-                  # observation time
-                 #t_obs_region = region['obstime']
+                # observation time
+                # t_obs_region = region['obstime']
                 t_obs_region = calculate_region_obstime(region, sources, lst+t_slew_region, az_r)
                 if cu.check_observability(region['obs_range'],
                                       lst + t_slew_region + t_obs_region):
-                       # observe the source
+                    # observe the source
                     regions_added.append(region['number'])
                     regions_added_lst.append(lst)
                     lst += t_obs_region + t_slew_region
                     non_grouped_regions.pop(region_pop_index)
-#                    print "observing region ", region['number']
+                    # print("observing region ", region['number'])
                        # update telescope position at end of observation
                        # this is position for last source at the end
                     za_ls, az_ls =\
@@ -547,14 +547,14 @@ def order_regions_slew_time(regions,
                                        # Considering current position of telescope convert geometric to                                                                                                     # telescope coordinates with azimuth wrap incorporated
                                 az_ls = tel_data.move_in_azimuth(az_t, az_ls)
                                 za_t, az_t = za_ls, az_ls
-        #                        print "observed calibrator region ", region['number']
-        #                        break #break out of the loop not to include two regions in a row
+                                # print("observed calibrator region ", region['number'])
+                                # break #break out of the loop not to include two regions in a row
                 else:
                     lst += delta_lst
-#            region_number=1 #test purposes!
-               #Add the first region into the list so that the schedule makes a full circle and lst start can be shifted
-##            regions_added.append(region_number)
-##            regions_added_lst.append(lst)
+            # region_number=1 #test purposes!
+            # # Add the first region into the list so that the schedule makes a full circle and lst start can be shifted
+            # regions_added.append(region_number)
+            # regions_added_lst.append(lst)
             sorted_regions = sort_regions_by_lst(regions_added, regions_added_lst, initial_start_lst)
             report =simulate_regions_final(regions,
                                             sorted_regions,
@@ -752,13 +752,10 @@ def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion,
         for i in range(len(poblacion)):
             new_order = poblacion[i]
             new_report = simulate_regions_final(regions, new_order, lst_start, sources, wait=True)
-
             new_t_obs = report_obs_time(new_report)
             new_t_wait = report_wait_time(new_report)
             new_t_slew = report_slew_time(new_report)
-
             #if obstime is reduced we have new optimum and others new conditions
-
             #if new_t_obs < minimum_obstime:
             #if new_t_obs < minimum_obstime and (new_t_slew + new_t_wait)<15:
             if (new_t_obs + new_t_slew + new_t_wait)<88:
