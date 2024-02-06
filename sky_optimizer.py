@@ -56,10 +56,10 @@ def get_region_by_number(regions, number):
     Since the region splitting, number is actually a string, because
     splitted regions get a string ID, e.g. '105a', '105b'.
     """
-    # loop through the regions until finding it
     num_str = str(number)
+    # loop through the regions until finding it
     for reg in regions:
-        if str(reg['number']) == num_str:  
+        if reg['number'] == num_str:  
             return reg
     return None
 
