@@ -56,13 +56,12 @@ def get_region_by_number(regions, number):
     Since the region splitting, number is actually a string, because
     splitted regions get a string ID, e.g. '105a', '105b'.
     """
-    # default value
-    region = None
     # loop through the regions until finding it
+    num_str = str(number)
     for reg in regions:
-        if str(reg['number']) == str(number):
-            region = reg
-    return region
+        if str(reg['number']) == num_str:  
+            return reg
+    return None
 
 def sort_regions_by_lst(regions_order, regions_order_lst, lst_start):
     """ Sort regions by LST. Pop out the region that's there both at the beginning
