@@ -316,14 +316,11 @@ def check_observability(obs_range, lst_obs):
     """
     # wrap around to [0, 24) range
     lst_obs = lst_obs % 24
-    # default observability value
-    observable = False
     # Loop through the observing ranges and check is lst_obs is in at least one
     for range in obs_range:
-        if range[0] <= lst_obs and lst_obs <= range[1]:
-            observable = True
-            break
-    return observable
+        if range[0] <= lst_obs <= range[1]:
+            return True
+    return False
 
 def closest_obsrange(obs_range, lst_obs):
     """Determine the closest observing range
