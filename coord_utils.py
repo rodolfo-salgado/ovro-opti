@@ -50,10 +50,10 @@ def radec_zaaz(ra, dec, lst):
     # 15 on total converts from hours to degrees
     lha = (lst - ra / 15) * 15
     # convert everything to radians
-    long = long * np.pi / 180
-    lat = lat * np.pi / 180
-    lha = lha * np.pi / 180
-    dec = dec * np.pi / 180
+    long = long * deg_to_rad
+    lat = lat * deg_to_rad
+    lha = lha * deg_to_rad
+    dec = dec * deg_to_rad
     # za in radians
     za = np.pi / 2 - \
         np.arcsin(np.cos(lha) * np.cos(dec) * np.cos(lat) + \
@@ -63,8 +63,8 @@ def radec_zaaz(ra, dec, lst):
                           -np.sin(lat) * np.cos(lha) * np.cos(dec) + \
                           np.sin(dec) * np.cos(lat))
     # to degrees
-    za = za * 180 / np.pi
-    az = az * 180 / np.pi
+    za = za * rad_to_deg
+    az = az * rad_to_deg
     # 0 < az < 360
     if az < 0:
         az = az + 360
