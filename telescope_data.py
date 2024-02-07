@@ -4,7 +4,6 @@ Check the telescope_data.ipynb notebook for more info.
 
 TODO:
 - Replace with objects instead of constants (requires code refactor)
-- Check move_in_azimuth
 - Change za to el (?)
 """
 
@@ -46,12 +45,12 @@ sun_avoid_angle = 10    # degree
 moon_avoid_angle = 10   # degree
 
 # Telescope slew model and observing time
-def obs_time(type):
+def obs_time(source_type):
     """ Returns the time on source as function of type.
 
     Parameters
     ----------
-    type : int
+    source_type : int
         Type of observation as defined on point key of sources list
 
     Returns
@@ -67,14 +66,15 @@ def obs_time(type):
 
     Add capability to handle cases not in the current list
     """
-    if type == 0:   # normal source
-        return time_doflux
-    elif type == 1: # First pointing calibrator
-        return time_dopoint
-    elif type == 2: # Pointing calibrator
-        return time_dopoint
-        
-    return
+    match source_type:
+        case 0: # normal source
+            return time_doflux
+        case 1: # First pointing calibrator
+            return time_dopoint
+        case 2: # Pointing calibrator
+            return time_cal
+        case _:
+            raise ValueError("Invalid source type")
 
 def move_in_azimuth(az_i, az_f): 
     """ Slew time with azimuth wrap.
