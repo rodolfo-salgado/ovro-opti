@@ -109,19 +109,18 @@ def move_in_azimuth(az_i, az_f):
     wmax, March 22, 2012
     """
     # Check that coordinates make sense
-    assert (-89 <= az_i) and (az_i <= 335),\
-           'za_i = %f, not in az wrap coordinates [-89, 335]' % (az_i)
-    assert (0 <= az_f) and (az_f <= 360),\
-           'za_f = %f, not in az geometric coordinates [0, 360]' % (az_f)
-    
+    assert (-89 <= az_i <= 335),\
+           f'za_i = {az_i}, not in az wrap coordinates [-89, 335]'
+    assert (0 <= az_f <= 360),\
+           f'za_f = {az_f}, not in az geometric coordinates [0, 360]'
     # Puts az_f in its possible values depending on azimuth wrap
     # First turn with no ambiguity
-    if ((0 <= az_f) and (az_f <= 271)):
-        az_f = az_f
+    if (0 <= az_f <= 271):
+        return az_f
         # az_turn = 1
     # First turn negative azimuth
-    elif ((335 <= az_f) and (az_f <= 360)):
-        az_f = az_f - 360
+    elif (335 <= az_f <= 360):
+        return az_f - 360
         # az_turn = 1
     # First of second turn depending on which is closer
     else:
@@ -133,12 +132,11 @@ def move_in_azimuth(az_i, az_f):
         d_az_second = abs(az_f_second - az_i)
         # Find shortest
         if d_az_first <= d_az_second:       
-            az_f = az_f_first
+            return az_f_first
             # az_turn = 1
         else:
-            az_f = az_f_second
+            return az_f_second
             # az_turn = 2
-    return az_f
 
 def slew_time(za_i, az_i, za_f, az_f):
     """ Given initial and final telescope position returns the slew time in 
