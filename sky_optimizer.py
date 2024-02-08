@@ -110,13 +110,27 @@ def position_last_source_on_region(region, sources, lst):
     return za, az
 
 def calculate_region_obstime(region, sources, lst_start, az_t):
-    """ Calculates the time taken to observe a region by taking the az wrap into
+    """Calculates the time taken to observe a region by taking the az wrap into
     account. Modification of the path_obstime routine in region_optimizer.py
-    inputs:
-    region = current region to be observed
-    sources = list of sources
-    lst_start = start lst of the region
-    az_t = current az position of the telescope
+
+    Parameters
+    ----------
+    region : dict
+        current region to be observed
+    sources : dict 
+        list of sources
+    lst_start : float
+        start lst of the region
+    az_t : float
+        current az position of the telescope
+
+    Returns
+    -------
+    obstime : float
+        Time to observe a region
+
+    Notes
+    -----
     2012-04-23 / thovatta
     """
     # current lst
