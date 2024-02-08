@@ -97,9 +97,21 @@ def sort_regions_by_lst(regions_order, regions_order_lst, lst_start):
     return regions_sorted
 
 def position_last_source_on_region(region, sources, lst):
-    """ Get the ZA/AZ for the last source on a region at a given lst
+    """Get the ZA/AZ for the last source on a region at a given lst
 
-    Returns za, az in degrees
+    Parameters
+    ----------
+    region : dict
+        current region to be observed
+    sources : dict 
+        list of sources
+    lst : float
+        start lst of the region
+
+    Returns
+    -------
+    za, az : float
+        ZA/AZ in degrees
     """
     # get name for last source in region
     last_source = region['sources'][region['order'][-1]]
