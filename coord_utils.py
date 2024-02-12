@@ -435,6 +435,37 @@ def wait_time_for_observability(obs_range, lst_obs):
     lst_start = closest_obsrange(obs_range, lst_obs)[0]
     return (lst_start - lst_obs) % 24
 
+def get_wait_time(obs_range, lst_obs):
+    """Returns the wait time to observe a source. If the source is already
+    observable returns 0.
+
+    Parameters
+    ----------
+    obs_range : list
+        List with pair of values with the extremes of the intervals.
+    lst_obs : float
+        LST in decimal hours
+
+    Returns
+    -------
+    wait_time : float
+        Wait time returned is in decimal hours
+    """
+    # Ensures LST is in [0, 24) range
+    lst_obs %= 24
+    wait_time = float('inf')
+    # Iterate through ranges
+    for r in obs_range:
+        # Check if list_obs is within an interval
+        if r[0] <= lst_obs <= r[1]:
+            # No wait time
+            return 0
+        else:
+            # Compute wait time considering wrap
+            wait_time = min((r[0] - lst_obs) % 24, wait_time)
+    return wait_time
+            
+
 def intersect_obs_ranges(obs_ranges, t_resol=0.01):
     """ Given a list of observing ranges, calculate their intersection.
 
