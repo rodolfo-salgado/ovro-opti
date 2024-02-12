@@ -24,6 +24,7 @@ import coord_utils as cu
 # import ipynb.fs.full.region_optimizer as ro
 import py40m_astro as pastro
 from tabulate import tabulate, SEPARATING_LINE
+from tqdm import tqdm
 
 
 def load_variables(savefile):
@@ -768,7 +769,7 @@ def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion,
                                                        za_t=0.0,
                                                        az_t=180.0)
         poblacion.append(updated_regions)
-    for generacion in range(num_generaciones):
+    for generacion in tqdm(range(num_generaciones)):
         for i in range(len(poblacion)):
             new_order = poblacion[i]
             new_report = simulate_regions_final(regions, new_order, lst_start, sources, wait=True)
