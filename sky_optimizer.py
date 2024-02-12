@@ -752,8 +752,8 @@ def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion,
     Antonia Bravo Rojo, Dic 20, 2023.
     """
     t0 = time.time()
-    # report = simulate_regions_final(regions, order_opt, lst_start, sources, wait=True)   #entrega [region_number,za_c, az_c, t_obs, t_slew, t_wait, obs_lst]
-    # minimum_obstime = report_obs_time(report)
+    report = simulate_regions_final(regions, order_opt, lst_start, sources, wait=True)   #entrega [region_number,za_c, az_c, t_obs, t_slew, t_wait, obs_lst]
+    total_time = report_total_time(report)
     # Creating a random starting population
     unique_order_opt = list(dict.fromkeys(order_opt))
     # N = len(order_opt)
@@ -773,14 +773,16 @@ def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion,
         for i in range(len(poblacion)):
             new_order = poblacion[i]
             new_report = simulate_regions_final(regions, new_order, lst_start, sources, wait=True)
-            new_t_obs = report_obs_time(new_report)
-            new_t_wait = report_wait_time(new_report)
-            new_t_slew = report_slew_time(new_report)
+            # new_t_obs = report_obs_time(new_report)
+            # new_t_wait = report_wait_time(new_report)
+            # new_t_slew = report_slew_time(new_report)
+            new_t_total = report_total_time(new_report)
             #if obstime is reduced we have new optimum and others new conditions
             #if new_t_obs < minimum_obstime:
             #if new_t_obs < minimum_obstime and (new_t_slew + new_t_wait)<15:
-            if (new_t_obs + new_t_slew + new_t_wait)<88:
-                # minimum_obstime = new_t_obs
+            # if (new_t_obs + new_t_slew + new_t_wait)<88:
+            if new_t_total < total_time:
+                total_time = new_t_total
                 order_opt = new_order
         nueva_poblacion = order_opt[:]
         while len(nueva_poblacion) < tam_poblacion:
@@ -793,13 +795,15 @@ def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion,
             nueva_poblacion.append(hijo)
             nuevo_orden = nueva_poblacion[-1]
             nuevo_report = simulate_regions_final(regions, nuevo_orden, lst_start, sources, wait=True)
-            nuevo_t_obs = report_wait_time(nuevo_report)
-            nuevo_t_wait = report_wait_time(nuevo_report)
-            nuevo_t_slew = report_slew_time(nuevo_report)
+            # nuevo_t_obs = report_wait_time(nuevo_report)
+            # nuevo_t_wait = report_wait_time(nuevo_report)
+            # nuevo_t_slew = report_slew_time(nuevo_report)
+            nuevo_t_total = report_total_time(nuevo_report)
             #if nuevo_t_obs < minimum_obstime:
             #if nuevo_t_obs < minimum_obstime and (nuevo_t_slew + nuevo_t_wait)<15:
-            if (nuevo_t_obs + nuevo_t_slew + nuevo_t_wait)<88:
-                # minimum_obstime = nuevo_t_obs
+            # if (nuevo_t_obs + nuevo_t_slew + nuevo_t_wait)<88:
+            if nuevo_t_total < total_time:
+                total_time = nuevo_t_total
                 order_opt = nuevo_orden
     #print( 'Final length = ', minimum_obstime)
     print( 'optimum travel order =  ', order_opt)
