@@ -213,7 +213,7 @@ def report_wait_time(report):
     t_wait = [row[5] for row in report]
     return sum(t_wait)
 
-def report_stats(report, print_summary=True):
+def report_stats(report, print_summary=True, return_stats=True):
     """ Generate a series of statistics using the report from
     simulate_regions_observation.
     """
@@ -226,6 +226,8 @@ def report_stats(report, print_summary=True):
     t_wait = [row[5] for row in report]
     lst = [row[6] for row in report]
     if print_summary:
+        # clone report
+        report = report.copy()
         # print to standard output a report with the observations
         print('Schedule summary')
         print('\tAngles in degrees, times in hours')
@@ -235,7 +237,8 @@ def report_stats(report, print_summary=True):
         report.append(['Total', sum(t_obs) + sum(t_wait) + sum(t_slew)])
         report.append(SEPARATING_LINE)
         print(tabulate(report, headers=table_head, floatfmt='.3f'))
-    return za, az, t_obs, t_slew, t_wait, lst
+    if return_stats:
+        return za, az, t_obs, t_slew, t_wait, lst
 
 def simulate_regions_observation(regions,
                                  regions_order,
