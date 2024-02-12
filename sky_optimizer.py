@@ -314,6 +314,7 @@ def simulate_regions_final(regions,
                            lst_start,
                            sources,
                            wait=False,
+                           compute_obstime=False,
                            za_t=0.0,
                            az_t=180.0):
     """ Simulate a given region order
@@ -364,7 +365,10 @@ def simulate_regions_final(regions,
         # copy the lst time as the observing lst
         obs_lst = lst
         # Get the observing time of that region
-        t_obs = calculate_region_obstime(curr_region, sources, lst, az_c)
+        if compute_obstime:
+            t_obs = calculate_region_obstime(curr_region, sources, lst, az_c)
+        else:
+            t_obs = curr_region['obstime']
         # print(f'Region: {curr_region['number']}', \
         #     f'Obs time: {curr_region['obstime']:.5f} (saved)',
         #     f'{t_obs:.5f} (real)\t'
