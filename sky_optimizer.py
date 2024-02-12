@@ -343,11 +343,10 @@ def simulate_regions_final(regions,
         curr_region = get_region_by_number(regions, regions_order[i])
         # Check that region is observable or wait==False
         # if not observable add t_wait
-        if cu.check_observability(curr_region['obs_range'], lst) or wait is False:
-            t_wait = 0.0
-        elif wait:
-            t_wait =\
-                cu.wait_time_for_observability(curr_region['obs_range'], lst)
+        if wait:
+            t_wait = cu.get_wait_time(curr_region['obs_range'], lst)
+        else:
+            t_wait = 0
         # add wait time
         lst += t_wait
         # Change compared to other simulation function: loop through the sources
