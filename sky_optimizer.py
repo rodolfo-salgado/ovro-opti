@@ -389,6 +389,36 @@ def simulate_regions_final(regions,
                        za_c, az_c, t_obs, t_slew, t_wait, obs_lst])
     return report
 
+def compute_total_time(regions, regions_order, lst_start, sources, \
+    za_t=0, az_t=180):
+    """Returns total time for an observation cycle (wait + slew + obs).
+    """
+    lst = lst_start % 24
+    t_total = 0
+    for i in regions_order:
+        # Get region
+        curr_region = get_region_by_number(regions, i)
+        # Add wait time
+        t_wait = cu.get_wait_time(curr_region['obs_range'], lst)
+        lst += t_wait
+        # Get region coords
+        za_c, az_c = cu.radec_zaaz(curr_region['ra'], curr_region['dec'], lst)
+        az_c = tel_data.move_in_azimuth(az_t, az_c)
+        # Get slew_time
+        t_slew = tel_data.slew_time(za_t, az_t, za_c, az_c)
+        lst += t_slew
+        # Get observation time
+        t_obs = curr_region['obstime']
+        lst += t_obs
+        # Move to last source in region
+        za_ls, az_ls = position_last_source_on_region(curr_region, sources, lst)
+        az_ls = tel_data.move_in_azimuth(az_t, az_ls)
+        za_t, az_t = za_ls, az_ls
+        # Sum times
+        t_total = t_wait + t_slew
+    return t_total
+
+
 def order_regions_slew_time(regions,
                                 sources,
                                 lst_start=0,
