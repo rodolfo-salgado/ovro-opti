@@ -466,7 +466,10 @@ def order_regions_slew_time(regions,
         sun_ra, sun_dec = cu.sun_pos(sun_jd)
         print ('sun ra dec=', sun_ra, sun_dec)
         for reg in regions_sun:
-            sep=pastro.sky_sep(pastro.ephem.degrees(reg['ra']*numpy.pi/180.0),pastro.ephem.degrees(reg['dec']*numpy.pi/180.0),pastro.ephem.degrees(sun_ra*numpy.pi/180.0), pastro.ephem.degrees(sun_dec*numpy.pi/180.0)) * 180.0 / numpy.pi
+            sep = pastro.sky_sep(pastro.ephem.degrees(reg['ra']*numpy.pi/180.0),
+                pastro.ephem.degrees(reg['dec']*numpy.pi/180.0),
+                pastro.ephem.degrees(sun_ra*numpy.pi/180.0),
+                pastro.ephem.degrees(sun_dec*numpy.pi/180.0)) * 180.0 / numpy.pi
             print ('region', reg['number'], 'sun_angle', sep, reg['ra'], reg['dec'])
             if sep > 10:
                 regions_zero_lst.append(reg['number'])
@@ -505,14 +508,16 @@ def order_regions_slew_time(regions,
                                                lst_start + lst_obs_win + region['obstime']):
                 regions_order.append(region['number'])
         print('regions observable at lst =', lst_start, 'are:', regions_order)
-        # by starting at each region, go through other regions selecting always the shortest slew time
+        # by starting at each region, go through other regions selecting always
+        # the shortest slew time
         # loop through the regions
         for region_number in regions_order:
             regions_added = []
             regions_added_lst = []
             non_grouped_regions = regions_zero_lst[:]
             # added = 0 #checking if time for 3C286 full track has been added
-            # get the region corresponding to the region_number and define the lst to be the lst when this region becomes observable
+            # get the region corresponding to the region_number and define the
+            # lst to be the lst when this region becomes observable
             start_region = get_region_by_number(regions, region_number)
             #lst = start_region['obs_range'][0][0]
             lst = lst_start
@@ -530,8 +535,9 @@ def order_regions_slew_time(regions,
             #update lst
             lst = lst + t_slew_region
             #lst_start = lst - t_slew_region
-            #if region_number == 45:
-            # print 'start lst =', lst_start, 'lst=', lst, 'slew = ', t_slew_region, 'range =', start_region['obs_range'], 't_obs = ', t_obs_region
+            #if region_number == 45: (WHY IS THIS REGION SPECIAL?)
+            # print 'start lst =', lst_start, 'lst=', lst, 'slew = ',
+            # t_slew_region, 'range =', start_region['obs_range'], 't_obs = ', t_obs_region
             #the first region must be observable so add into regions_added and take away from regions left
             #check if this is cal region
             if region_number in daily_regions_numbers:
@@ -631,7 +637,8 @@ def order_regions_slew_time(regions,
                         # telescope coordinates with azimuth wrap incorporated
                     az_ls = tel_data.move_in_azimuth(az_t, az_ls)
                     za_t, az_t = za_ls, az_ls
-                        #check if a daily cal observation could be inserted here. Check that no cal region has been observed within the last
+                        #check if a daily cal observation could be inserted here.
+                        # Check that no cal region has been observed within the last
                         # 12 hours and that there are less than 4 added calibrators
                     for reg in daily_regions_list:
                         # get region information
@@ -782,7 +789,8 @@ def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion,
     Antonia Bravo Rojo, Dic 20, 2023.
     """
     t0 = time.time()
-    report = simulate_regions_final(regions, order_opt, lst_start, sources, wait=True)   #entrega [region_number,za_c, az_c, t_obs, t_slew, t_wait, obs_lst]
+    # entrega [region_number,za_c, az_c, t_obs, t_slew, t_wait, obs_lst]
+    report = simulate_regions_final(regions, order_opt, lst_start, sources, wait=True)
     total_time = report_total_time(report)
     # Creating a random starting population
     unique_order_opt = list(dict.fromkeys(order_opt))
