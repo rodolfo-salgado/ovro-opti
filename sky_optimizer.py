@@ -58,6 +58,9 @@ class SkyOptimizer:
                 self.survival = self.survop_replace
             case 'evolution':
                 self.survival = self.survop_evol
+    
+    def set_seed(self, seed):
+        random.seed(seed)
 
     def run_optimizer(self, print_output=True):
         pop = self.optimizer()
