@@ -94,6 +94,7 @@ class SkyOptimizer:
                     i = random.randint(0, n - 1)
                     j = random.randint(0, n - 1)
                     c[i], c[j] = c[j], c[i]
+        return children
 
     def opt_genetic(self):
         pop = self.new_pop()
