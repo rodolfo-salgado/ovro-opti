@@ -26,6 +26,8 @@ class SkyOptimizer:
         match generator:
             case 'random':
                 self.new_pop = self.popgen_random
+            case 'clone':
+                self.new_pop = self.popgen_clone
     
     def set_par_selector(self, selector):
         match selector:
@@ -63,6 +65,12 @@ class SkyOptimizer:
             new_pop = self.order.copy()
             random.shuffle(new_pop)
             population.append(new_pop)
+        return population
+    
+    def popgen_clone(self):
+        population = []
+        for _ in range(self.pop_size):
+            population.append(self.order)
         return population
 
     # Parent selectors
@@ -123,4 +131,7 @@ class SkyOptimizer:
             children = self.crossover(parents)
             children = self.mutation(children)
             pop = self.survival(pop, parents=parents, children=children)
+            min_sol = min(pop, key=self.obj_func)
+            total_time = self.obj_func(min_sol)
+            pbar.set_postfix({'total_time':f'{total_time:.2f}'})
         return pop
