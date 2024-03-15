@@ -26,7 +26,7 @@ class SkyOptimizer:
         match generator:
             case 'random':
                 self.new_pop = self.popgen_random
-            case 'clone':
+            case 'identical':
                 self.new_pop = self.popgen_clone
     
     def set_par_selector(self, selector):
@@ -69,7 +69,7 @@ class SkyOptimizer:
             population.append(new_pop)
         return population
     
-    def popgen_clone(self):
+    def popgen_identical(self):
         population = []
         for _ in range(self.pop_size):
             population.append(self.order)
