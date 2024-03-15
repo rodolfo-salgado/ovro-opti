@@ -1,4 +1,5 @@
 import random
+import copy
 from tqdm import trange
 
 class SkyOptimizer:
@@ -60,7 +61,8 @@ class SkyOptimizer:
     def run_optimizer(self, print_output=True):
         pop = self.optimizer()
         ranked_pop = sorted(pop, key=self.obj_func)
-        return ranked_pop[0]
+        self.order = ranked_pop[0]
+        return self.order
 
     # Population generators
     def popgen_random(self):
@@ -74,7 +76,7 @@ class SkyOptimizer:
     def popgen_identical(self):
         population = []
         for _ in range(self.pop_size):
-            population.append(self.order)
+            population.append(self.order.copy())
         return population
 
     # Parent selectors
@@ -89,7 +91,7 @@ class SkyOptimizer:
     def parsel_rank(self, population, num):
         pop_rank = sorted(population, key=self.obj_func)
         parents = []
-        for i in range(1, num, 2):
+        for i in range(1, 2*num, 2):
             par1 = pop_rank[i-1]
             par2 = pop_rank[i]
             parents.append((par1, par2))
@@ -110,15 +112,19 @@ class SkyOptimizer:
     def crossover_clone(self, parents):
         children = []
         for p1, p2 in parents:
-            children.append(p1)
+            children.append(p1.copy())
         return children
 
     # Survival selection operators
-    def survop_replace(self, pop, **kwargs):
-        return kwargs['children']
+    def survop_replace(self, pop, children):
+        return children
 
-    def survop_evol(self, pop, **kwargs):
+    def survop_evol(self, pop, children):
+        pop.extend(children)
+        # print(len(pop), len(children))
         pop_rank = sorted(pop, key=self.obj_func)
+        # for i in children:
+        #     print(self.obj_func(i), i)
         return pop_rank[:self.pop_size]
 
     # Mutation operators
@@ -138,6 +144,7 @@ class SkyOptimizer:
             if self.mut_prob > random.random():
                 n = len(c)
                 i = random.randint(0, n - 2)
+                # print('mutation', i, i+1)
                 c[i], c[i+1] = c[i+1], c[i]
         return children
 
@@ -148,7 +155,7 @@ class SkyOptimizer:
             parents = self.selection(pop, self.offsp_size)
             children = self.crossover(parents)
             children = self.mutation(children)
-            pop = self.survival(pop, parents=parents, children=children)
+            pop = self.survival(pop, children)
             min_sol = min(pop, key=self.obj_func)
             total_time = self.obj_func(min_sol)
             pbar.set_postfix({'total_time':f'{total_time:.2f}'})
