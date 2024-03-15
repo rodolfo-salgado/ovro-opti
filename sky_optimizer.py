@@ -1,5 +1,4 @@
 import random
-import copy
 from tqdm import trange
 
 class SkyOptimizer:
@@ -50,6 +49,8 @@ class SkyOptimizer:
                 self.mutation = self.mutop_permutate
             case 'swap':
                 self.mutation = self.mutop_swap
+            case 'local_perm':
+                self.mutation = self.mutop_localperm
 
     def set_survop(self, surv_op):
         match surv_op:
@@ -147,6 +148,17 @@ class SkyOptimizer:
                 # print('mutation', i, i+1)
                 c[i], c[i+1] = c[i+1], c[i]
         return children
+    
+    def mutop_localperm(self, children):
+        for c in children:
+            n = len(c)
+            i_len = int(self.mut_rate * n)
+            i = random.randint(0, n - i_len)
+            chunk = c[i:i+i_len]
+            random.shuffle(chunk)
+            c[i:i+i_len] = chunk
+        return children
+
 
     def opt_genetic(self):
         pop = self.new_pop()
