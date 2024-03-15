@@ -27,7 +27,7 @@ class SkyOptimizer:
             case 'random':
                 self.new_pop = self.popgen_random
             case 'identical':
-                self.new_pop = self.popgen_clone
+                self.new_pop = self.popgen_identical
     
     def set_par_selector(self, selector):
         match selector:
@@ -40,6 +40,8 @@ class SkyOptimizer:
         match crossover_op:
             case 'single_point':
                 self.crossover = self.crossover_single
+            case 'clone':
+                self.crossover = self.crossover_clone
     
     def set_mutop(self, mut_op):
         match mut_op:
@@ -103,6 +105,12 @@ class SkyOptimizer:
                 if s not in new_child:
                     new_child.append(s)
             children.append(new_child)
+        return children
+
+    def crossover_clone(self, parents):
+        children = []
+        for p1, p2 in parents:
+            children.append(p1)
         return children
 
     # Survival selection operators
