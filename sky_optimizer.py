@@ -48,6 +48,8 @@ class SkyOptimizer:
         match surv_op:
             case 'replace':
                 self.survival = self.survop_replace
+            case 'evolution':
+                self.survival = self.survop_evol
 
     def run_optimizer(self, print_output=True):
         pop = self.optimizer()
@@ -76,7 +78,6 @@ class SkyOptimizer:
         pop_rank = sorted(population, key=self.obj_func)
         parents = []
         for i in range(1, num, 2):
-            print(len(pop_rank), i)
             par1 = pop_rank[i-1]
             par2 = pop_rank[i]
             parents.append((par1, par2))
@@ -95,8 +96,12 @@ class SkyOptimizer:
         return children
 
     # Survival selection operators
-    def survop_replace(self, pop, children):
-        return children
+    def survop_replace(self, pop, **kwargs):
+        return kwargs['children']
+
+    def survop_evol(self, pop, **kwargs):
+        pop_rank = sorted(pop, key=self.obj_func)
+        return pop_rank[:self.pop_size]
 
     # Mutation operators
     def mutop_permutate(self, children):
@@ -117,5 +122,5 @@ class SkyOptimizer:
             parents = self.selection(pop, self.offsp_size)
             children = self.crossover(parents)
             children = self.mutation(children)
-            pop = self.survival(pop, children)
+            pop = self.survival(pop, parents=parents, children=children)
         return pop
