@@ -2,9 +2,9 @@ import random
 from tqdm import trange
 
 class SkyOptimizer:
-    def __init__(self, regions_data, init_order, **kwargs):
-        self.regions = regions_data
+    def __init__(self, init_order, obj_func, **kwargs):
         self.order = init_order
+        self.obj_func = obj_func
         self.optimizer = None
     
     def set_optimizer(self, optimizer, **kwargs):
@@ -19,8 +19,8 @@ class SkyOptimizer:
                 self.set_pop_generator(kwargs['pop_gen'])
                 self.set_par_selector(kwargs['selector'])
                 self.set_crossover(kwargs['crossover_op'])
-                self.set_mutop(kwargs['mut_op'])
-                self.set_survop(kwargs['surv_op'])
+                self.set_mutop(kwargs['mutation_op'])
+                self.set_survop(kwargs['survival_op'])
     
     def set_pop_generator(self, generator):
         match generator:
@@ -31,6 +31,8 @@ class SkyOptimizer:
         match selector:
             case 'natural':
                 self.selection = self.parsel_natural
+            case 'rank':
+                self.selection = self.parsel_rank
     
     def set_crossover(self, crossover_op):
         match crossover_op:
@@ -48,7 +50,9 @@ class SkyOptimizer:
                 self.survival = self.survop_replace
 
     def run_optimizer(self, print_output=True):
-        self.optimizer()
+        pop = self.optimizer()
+        ranked_pop = sorted(pop, key=self.obj_func)
+        return ranked_pop[0]
 
     # Population generators
     def popgen_random(self):
@@ -65,6 +69,16 @@ class SkyOptimizer:
         for _ in range(num):
             par1 = random.choice(population)
             par2 = random.choice(population)
+            parents.append((par1, par2))
+        return parents
+
+    def parsel_rank(self, population, num):
+        pop_rank = sorted(population, key=self.obj_func)
+        parents = []
+        for i in range(1, num, 2):
+            print(len(pop_rank), i)
+            par1 = pop_rank[i-1]
+            par2 = pop_rank[i]
             parents.append((par1, par2))
         return parents
 
