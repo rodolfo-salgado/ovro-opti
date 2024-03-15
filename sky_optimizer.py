@@ -45,6 +45,8 @@ class SkyOptimizer:
         match mut_op:
             case 'permutate':
                 self.mutation = self.mutop_permutate
+            case 'swap':
+                self.mutation = self.mutop_swap
 
     def set_survop(self, surv_op):
         match surv_op:
@@ -121,6 +123,14 @@ class SkyOptimizer:
                     i = random.randint(0, n - 1)
                     j = random.randint(0, n - 1)
                     c[i], c[j] = c[j], c[i]
+        return children
+
+    def mutop_swap(self, children):
+        for c in children:
+            if self.mut_prob > random.random():
+                n = len(c)
+                i = random.randint(0, n - 2)
+                c[i], c[i+1] = c[i+1], c[i]
         return children
 
     def opt_genetic(self):
