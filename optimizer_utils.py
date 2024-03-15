@@ -415,7 +415,7 @@ def compute_total_time(regions, regions_order, lst_start, sources, \
         az_ls = tel_data.move_in_azimuth(az_t, az_ls)
         za_t, az_t = za_ls, az_ls
         # Sum times
-        t_total = t_wait + t_slew + t_obs
+        t_total += t_wait + t_slew + t_obs
     return t_total
 
 
