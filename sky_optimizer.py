@@ -11,17 +11,21 @@ class SkyOptimizer:
     def set_optimizer(self, optimizer, **kwargs):
         match optimizer:
             case 'genetic':
+                self.optimizer = self.opt_genetic
                 self.pop_size = kwargs['pop_size']
                 self.offsp_size = kwargs['offsp_size']
                 self.gen_num = kwargs['gen_num']
                 self.mut_prob = kwargs['mut_prob']
                 self.mut_rate = kwargs['mut_rate']
-                self.optimizer = self.opt_genetic
                 self.set_pop_generator(kwargs['pop_gen'])
                 self.set_par_selector(kwargs['selector'])
                 self.set_crossover(kwargs['crossover_op'])
                 self.set_mutop(kwargs['mutation_op'])
                 self.set_survop(kwargs['survival_op'])
+            case 'calibrators':
+                self.optimizer = self.opt_calibrators
+                self.perm_width = kwargs['perm_width']
+                self.n_iter = kwargs['n_iter']
     
     def set_pop_generator(self, generator):
         match generator:
@@ -160,7 +164,7 @@ class SkyOptimizer:
             c[i:i+i_len] = chunk
         return children
 
-
+    # Optmiziers
     def opt_genetic(self):
         pop = self.new_pop()
         self.pop = pop
@@ -176,4 +180,10 @@ class SkyOptimizer:
         ranked_pop = sorted(pop, key=self.obj_func)
         self.order = ranked_pop[0]
         self.pop = ranked_pop
+        return self.order
+
+    def opt_calibrators(self):
+        pbar = trange(self.gen_num)
+        for i in pbar:
+            pass
         return self.order
