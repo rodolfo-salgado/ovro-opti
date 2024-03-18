@@ -881,7 +881,7 @@ def check_calibrators(regions_order, lst_start, regions, sources, calibrators, \
         t_obs = curr_region['obstime']
         lst += t_obs
         t_last += t_wait + t_slew + t_obs
-        if i in calibrators:
+        if i in calibrators.keys():
             t_last = 0
         elif t_last > 24:
             print(lst, t_last, i)
@@ -913,7 +913,7 @@ def place_calibrators(regions_order, lst_start, regions, sources, calibrators, \
         t_obs = curr_region['obstime']
         lst += t_obs
         t_last += t_wait + t_slew + t_obs
-        if i in calibrators:
+        if i in calibrators.keys():
             t_last = 0
         elif t_last > 24:
             cal_idx.append(i)
