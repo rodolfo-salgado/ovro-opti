@@ -860,3 +860,34 @@ def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion,
     tf = time.time()
     print('time taken:', (tf-t0)/60, 'min')
     return order_opt
+
+def check_calibrators(regions_order, lst_start, regions, sources, calibrators, \
+    za_t=0, az_t=180):
+    lst = lst_start % 24
+    t_last = 0
+    for i in regions_order:
+        # Get region
+        curr_region = regions[i]
+        # Add wait time
+        t_wait = cu.get_wait_time(curr_region['obs_range'], lst)
+        lst += t_wait
+        # Get region coords
+        za_c, az_c = cu.radec_zaaz(curr_region['ra'], curr_region['dec'], lst)
+        az_c = tel_data.move_in_azimuth(az_t, az_c)
+        # Get slew_time
+        t_slew = tel_data.slew_time(za_t, az_t, za_c, az_c)
+        lst += t_slew
+        # Get observation time
+        t_obs = curr_region['obstime']
+        lst += t_obs
+        t_last += t_wait + t_slew + t_obs
+        if i in calibrators:
+            t_last = 0
+        elif t_last > 24:
+            print(lst, t_last, i)
+            return False
+        # Move to last source in region
+        za_ls, az_ls = position_last_source_on_region(curr_region, sources, lst)
+        az_ls = tel_data.move_in_azimuth(az_t, az_ls)
+        za_t, az_t = za_ls, az_ls
+    return True
