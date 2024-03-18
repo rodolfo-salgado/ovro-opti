@@ -6,6 +6,7 @@ class SkyOptimizer:
         self.order = init_order
         self.obj_func = obj_func
         self.optimizer = None
+        self.pop = None
     
     def set_optimizer(self, optimizer, **kwargs):
         match optimizer:
@@ -63,10 +64,7 @@ class SkyOptimizer:
         random.seed(seed)
 
     def run_optimizer(self, print_output=True):
-        pop = self.optimizer()
-        ranked_pop = sorted(pop, key=self.obj_func)
-        self.order = ranked_pop[0]
-        return self.order
+        return self.optimizer()
 
     # Population generators
     def popgen_random(self):
@@ -165,6 +163,7 @@ class SkyOptimizer:
 
     def opt_genetic(self):
         pop = self.new_pop()
+        self.pop = pop
         pbar = trange(self.gen_num)
         for gen in pbar:
             parents = self.selection(pop, self.offsp_size)
@@ -174,4 +173,7 @@ class SkyOptimizer:
             min_sol = min(pop, key=self.obj_func)
             total_time = self.obj_func(min_sol)
             pbar.set_postfix({'total_time':f'{total_time:.2f}'})
-        return pop
+        ranked_pop = sorted(pop, key=self.obj_func)
+        self.order = ranked_pop[0]
+        self.pop = ranked_pop
+        return self.order
