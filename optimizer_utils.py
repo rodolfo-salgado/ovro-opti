@@ -397,7 +397,7 @@ def compute_total_time(regions, regions_order, lst_start, sources, \
     t_total = 0
     for i in regions_order:
         # Get region
-        curr_region = get_region_by_number(regions, i)
+        curr_region = regions[i]
         # Add wait time
         t_wait = cu.get_wait_time(curr_region['obs_range'], lst)
         lst += t_wait
