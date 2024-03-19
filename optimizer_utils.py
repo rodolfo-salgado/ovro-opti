@@ -862,12 +862,12 @@ def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion,
     return order_opt
 
 def check_calibrators(regions_order, lst_start, regions, sources, calibrators, \
-    za_t=0, az_t=180):
+    za_t=0, az_t=180, prnt=False):
     lst = lst_start % 24
     t_last = 0
-    for i in regions_order:
+    for i, R in enumerate(regions_order):
         # Get region
-        curr_region = regions[i]
+        curr_region = regions[R]
         # Add wait time
         t_wait = cu.get_wait_time(curr_region['obs_range'], lst)
         lst += t_wait
@@ -877,49 +877,77 @@ def check_calibrators(regions_order, lst_start, regions, sources, calibrators, \
         # Get slew_time
         t_slew = tel_data.slew_time(za_t, az_t, za_c, az_c)
         lst += t_slew
+        t_last += t_wait + t_slew
+        if t_last > 24:
+            if prnt:
+                print(f'CAL MISSING at Reg {R} (i={i}) LST: {lst:.2f}  (LastCal: {t_last:.2f})')
+            return False
         # Get observation time
+        if R in calibrators.keys():
+            if prnt:
+                print(f'CAL FOUND -> Cal {R} (i={i}) at LST {lst:.2f}  (LastCal: {t_last:.2f})')
+            t_last = 0
         t_obs = curr_region['obstime']
         lst += t_obs
-        t_last += t_wait + t_slew + t_obs
-        if i in calibrators.keys():
-            t_last = 0
-        elif t_last > 24:
-            print(lst, t_last, i)
-            return False
+        t_last += t_obs
         # Move to last source in region
         za_ls, az_ls = position_last_source_on_region(curr_region, sources, lst)
         az_ls = tel_data.move_in_azimuth(az_t, az_ls)
         za_t, az_t = za_ls, az_ls
     return True
 
-def place_calibrators(regions_order, lst_start, regions, sources, calibrators, \
+def place_calibrator(regions_order, lst_start, regions, sources, calibrators, \
     za_t=0, az_t=180):
     lst = lst_start % 24
     t_last = 0
-    cal_idx = []
-    for i in regions_order:
+    last_i = 0
+    for i, R in enumerate(regions_order):
+        # if R in calibrators.keys():
+        #     t_last = 0
+        # elif t_last > 24:
+        #     last_i = i
+        #     break
         # Get region
-        curr_region = regions[i]
+        curr_region = regions[R]
         # Add wait time
         t_wait = cu.get_wait_time(curr_region['obs_range'], lst)
         lst += t_wait
-        # Get region coords
+        # Add slew time
         za_c, az_c = cu.radec_zaaz(curr_region['ra'], curr_region['dec'], lst)
         az_c = tel_data.move_in_azimuth(az_t, az_c)
-        # Get slew_time
         t_slew = tel_data.slew_time(za_t, az_t, za_c, az_c)
         lst += t_slew
-        # Get observation time
+        t_last += t_wait + t_slew
+        if t_last > 24:
+            last_i = i - 1
+            break
+        if R in calibrators.keys():
+            t_last = 0
+        # Add observation time
         t_obs = curr_region['obstime']
         lst += t_obs
-        t_last += t_wait + t_slew + t_obs
-        if i in calibrators.keys():
-            t_last = 0
-        elif t_last > 24:
-            cal_idx.append(i)
-            return False
+        t_last += t_obs
         # Move to last source in region
         za_ls, az_ls = position_last_source_on_region(curr_region, sources, lst)
         az_ls = tel_data.move_in_azimuth(az_t, az_ls)
         za_t, az_t = za_ls, az_ls
-    return True
+    best_time = float('inf')
+    best_cal = None
+    while best_cal is None:
+        for c in calibrators.keys():
+        # for c in ['136']:
+            new_order = regions_order.copy()
+            new_order.insert(last_i, c)
+            new_time = compute_total_time(regions, new_order, lst_start, sources)
+            # print(c, new_time)
+            if new_time < best_time:
+                if check_calibrators(new_order[:last_i], lst_start, regions, sources, calibrators):
+                    best_time = new_time
+                    best_cal = c
+        if best_cal is None:
+            print('NONE', f'{last_i}')
+            last_i -= 1
+    new_order = regions_order.copy()
+    new_order.insert(last_i, best_cal)
+    print(f'Insert cal {best_cal} at i={last_i}')
+    return new_order

@@ -24,6 +24,8 @@ class SkyOptimizer:
                 self.set_survop(kwargs['survival_op'])
             case 'calibrators':
                 self.optimizer = self.opt_calibrators
+                self.check_calib = kwargs['check_calib']
+                self.place_calib = kwargs['place_calib']
                 self.perm_width = kwargs['perm_width']
                 self.n_iter = kwargs['n_iter']
     
