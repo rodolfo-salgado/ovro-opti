@@ -952,13 +952,12 @@ def place_calibrator(regions_order, lst_start, regions, sources, calibrators, \
     print(f'Insert cal {best_cal} at i={last_i}')
     return new_order
 
-def get_time_detail(regions, regions_order, lst_start, sources, \
-    za_t=0, az_t=180):
+def get_time_detail(reg_order, regions, sources, lst_i=0, za_t=0, az_t=180):
     """Returns total time for an observation cycle (wait + slew + obs).
     """
-    lst = lst_start % 24
+    lst = lst_i % 24
     Time = []
-    for R in regions_order:
+    for R in reg_order:
         # Get region
         curr_region = regions[R]
         # Add wait time
