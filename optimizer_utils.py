@@ -880,12 +880,12 @@ def check_calibrators(regions_order, lst_start, regions, sources, calibrators, \
         t_last += t_wait + t_slew
         if t_last > 24:
             if prnt:
-                print(f'CAL MISSING at Reg {R} (i={i}) LST: {lst:.2f}  (LastCal: {t_last:.2f})')
+                print(f'CAL MISSING at Reg {R} (i: {i}, LST: {lst:.2f}) - LastCal: {t_last:.2f})')
             return False
         # Get observation time
         if R in calibrators.keys():
             if prnt:
-                print(f'CAL FOUND -> Cal {R} (i={i}) at LST {lst:.2f}  (LastCal: {t_last:.2f})')
+                print(f'CAL FOUND -> Cal {R} (i: {i}, LST: {lst:.2f}) - LastCal: {t_last:.2f}')
             t_last = 0
         t_obs = curr_region['obstime']
         lst += t_obs
