@@ -979,3 +979,19 @@ def get_time_detail(reg_order, regions, sources, lst_i=0, za_t=0, az_t=180):
         # Add times
         Time.append((R, t_wait, t_slew, t_obs, lst))
     return Time
+
+def local_perm(order_i, pos, size, n_iter, obj_func, val_func=None):
+    order = order_i.copy()
+    idx_i = max(int(pos - size/2), 0)
+    idx_f = min(int(pos + size/2), len(order) - 1)
+    best_time = obj_func(order_i)
+    for _ in range(n_iter):
+        new_order = order.copy()
+        chunk = new_order[idx_i:idx_f]
+        random.shuffle(chunk)
+        new_order[idx_i:idx_f] = chunk
+        if (val_func is None) or val_func(new_order):
+            new_time = obj_func(new_order)
+            if new_time < best_time:
+                order = new_order.copy()
+    return order
