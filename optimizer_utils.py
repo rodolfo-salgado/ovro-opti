@@ -861,7 +861,7 @@ def genetic_algorithm_sky(regions, sources, order_opt, lst_start, tam_poblacion,
     print('time taken:', (tf-t0)/60, 'min')
     return order_opt
 
-def check_calibrators(regions_order, lst_start, regions, sources, calibrators, \
+def check_calibrators(regions_order, regions, sources, calibrators, lst_start, \
     za_t=0, az_t=180, prnt=False):
     lst = lst_start % 24
     t_last = 0
@@ -896,7 +896,7 @@ def check_calibrators(regions_order, lst_start, regions, sources, calibrators, \
         za_t, az_t = za_ls, az_ls
     return True
 
-def place_calibrator(regions_order, lst_start, regions, sources, calibrators, \
+def place_calibrator(regions_order, regions, sources, calibrators, lst_start, \
     za_t=0, az_t=180):
     lst = lst_start % 24
     t_last = 0
@@ -941,7 +941,7 @@ def place_calibrator(regions_order, lst_start, regions, sources, calibrators, \
             new_time = compute_total_time(regions, new_order, lst_start, sources)
             # print(c, new_time)
             if new_time < best_time:
-                if check_calibrators(new_order[:last_i], lst_start, regions, sources, calibrators):
+                if check_calibrators(new_order[:last_i], regions, sources, calibrators, lst_start):
                     best_time = new_time
                     best_cal = c
         if best_cal is None:
