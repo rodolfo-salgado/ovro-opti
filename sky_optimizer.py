@@ -182,7 +182,7 @@ class SkyOptimizer:
         ranked_pop = sorted(pop, key=self.obj_func)
         self.order = ranked_pop[0]
         self.pop = ranked_pop
-        return self.order
+        return self.order.copy()
 
     def opt_calibrators(self):
         pbar = trange(self.gen_num)
