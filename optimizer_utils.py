@@ -389,7 +389,7 @@ def simulate_regions_final(regions,
                        za_c, az_c, t_obs, t_slew, t_wait, obs_lst])
     return report
 
-def compute_total_time(regions, regions_order, lst_start, sources, \
+def compute_total_time(regions, regions_order, sources, lst_start, \
     za_t=0, az_t=180):
     """Returns total time for an observation cycle (wait + slew + obs).
     """
@@ -938,7 +938,7 @@ def place_calibrator(regions_order, regions, sources, calibrators, lst_start, \
         # for c in ['136']:
             new_order = regions_order.copy()
             new_order.insert(last_i, c)
-            new_time = compute_total_time(regions, new_order, lst_start, sources)
+            new_time = compute_total_time(regions, new_order, sources, lst_start)
             # print(c, new_time)
             if new_time < best_time:
                 if check_calibrators(new_order[:last_i], regions, sources, calibrators, lst_start):
