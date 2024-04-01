@@ -2,7 +2,6 @@ import optimizer_utils as opt
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.ticker as ticker
-import math
 
 def plot_order(order, reg_dict, src_dict, cal_dict, path=None, \
     reg_labels=False, mark_cals=True, plot_lst=True):
