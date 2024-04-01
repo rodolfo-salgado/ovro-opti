@@ -958,6 +958,7 @@ def get_time_detail(reg_order, regions, sources, lst_i=0, za_t=0, az_t=180):
     lst = lst_i % 24
     Time = []
     for R in reg_order:
+        lst_r = lst
         # Get region
         curr_region = regions[R]
         # Add wait time
@@ -977,7 +978,7 @@ def get_time_detail(reg_order, regions, sources, lst_i=0, za_t=0, az_t=180):
         az_ls = tel_data.move_in_azimuth(az_t, az_ls)
         za_t, az_t = za_ls, az_ls
         # Add times
-        Time.append((R, t_wait, t_slew, t_obs, lst))
+        Time.append((R, t_wait, t_slew, t_obs, lst_r))
     return Time
 
 def local_perm(order_i, pos, size, n_iter, obj_func, val_f=None):

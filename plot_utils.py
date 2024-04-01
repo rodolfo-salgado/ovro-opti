@@ -44,7 +44,7 @@ def plot_order(order, reg_dict, src_dict, cal_dict, path=None, \
         ax2.yaxis.set_major_locator(ticker.MultipleLocator(24))
         ax2.yaxis.set_minor_locator(ticker.MultipleLocator(12))
         ax2.set_ylabel('LST [h]')
-        ax2.set_ylim(bottom=math.floor(lst[0]))
+        ax2.set_ylim(bottom=lst[0])
         legends.append(Line2D([], [], color='r', lw=1.5, label='Current LST'))
     if mark_cals:
         legends.append(Line2D([], [], linestyle='None', color='r', marker='v', label='Calibrator'))
