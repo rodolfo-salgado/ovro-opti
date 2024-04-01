@@ -38,7 +38,7 @@ def plot_order(order, reg_dict, src_dict, cal_dict, path=None, \
         ax.tick_params(axis='x', labelsize=6, rotation=45, labelrotation=90)
     if plot_lst:
         ax2 = ax.twinx()
-        _, _, _, _, lst = zip(*Time)
+        lst = [t[4] for t in Time]
         ax2.plot([i for i in range(len(Time))], lst, color='r', lw=1.5)
         ax2.yaxis.set_major_locator(ticker.MultipleLocator(24))
         ax2.yaxis.set_minor_locator(ticker.MultipleLocator(12))
