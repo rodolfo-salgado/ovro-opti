@@ -983,25 +983,29 @@ def get_time_detail(reg_order, regions, sources, lst_i=0, za_t=0, az_t=180):
         Time.append((R, t_wait, t_slew, t_obs, lst_r, za_r, az_r))
     return Time
 
-def fill_wait(reg_order, regions, sources, exclude_list=[]):
+def fill_wait(reg_order, regions, sources, exclude_list=[], output=False):
     new_order = reg_order.copy()
     Time = get_time_detail(reg_order, regions, sources)
     n_added = 0
     search_regs = list(set(regions.keys()) - set(exclude_list))
     added_regs_idx = []
     for i, T in enumerate(Time):
+        best_t = float('inf')
+        new_idx = None
         if T[1] > 0:
-            best_t = float('inf')
             for r in search_regs:
                 new_t = compute_total_time(regions, [r, T[0]], sources, \
                     T[4], T[5], T[6])
                 if (new_t < best_t) and (new_t < T[1] + T[2] + T[3]):
                     best_t = new_t
                     new_idx = i + n_added
-                    new_order.insert(new_idx, r)
-                    added_regs_idx.append(new_idx)
-                    print(f'Insert {r} at i={new_idx}')
-                    n_added += 1
+                    new_r = r
+            if new_idx is not None:
+                new_order.insert(new_idx, new_r)
+                added_regs_idx.append(new_idx)
+                if output:
+                    print(f'Inserting reg {new_r} before reg {T[0]} (i={new_idx})')
+                n_added += 1
     return new_order, added_regs_idx
 
 
