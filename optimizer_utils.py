@@ -958,6 +958,9 @@ def get_time_detail(reg_order, regions, sources, lst_i=0, za_t=0, az_t=180):
     lst = lst_i % 24
     Time = []
     for R in reg_order:
+        lst_r = lst
+        za_r = za_t
+        az_r = az_t
         # Get region
         curr_region = regions[R]
         # Add wait time
@@ -977,8 +980,34 @@ def get_time_detail(reg_order, regions, sources, lst_i=0, za_t=0, az_t=180):
         az_ls = tel_data.move_in_azimuth(az_t, az_ls)
         za_t, az_t = za_ls, az_ls
         # Add times
-        Time.append((R, t_wait, t_slew, t_obs, lst))
+        Time.append((R, t_wait, t_slew, t_obs, lst_r, za_r, az_r))
     return Time
+
+def fill_wait(reg_order, regions, sources, exclude_list=[], output=False):
+    new_order = reg_order.copy()
+    Time = get_time_detail(reg_order, regions, sources)
+    n_added = 0
+    search_regs = list(set(regions.keys()) - set(exclude_list))
+    added_regs_idx = []
+    for i, T in enumerate(Time):
+        best_t = float('inf')
+        new_idx = None
+        if T[1] > 0:
+            for r in search_regs:
+                new_t = compute_total_time(regions, [r, T[0]], sources, \
+                    T[4], T[5], T[6])
+                if (new_t < best_t) and (new_t < T[1] + T[2] + T[3]):
+                    best_t = new_t
+                    new_idx = i + n_added
+                    new_r = r
+            if new_idx is not None:
+                new_order.insert(new_idx, new_r)
+                added_regs_idx.append(new_idx)
+                if output:
+                    print(f'Inserting reg {new_r} before reg {T[0]} (i={new_idx})')
+                n_added += 1
+    return new_order, added_regs_idx
+
 
 def local_perm(order_i, pos, size, n_iter, obj_func, val_f=None):
     order = order_i.copy()
