@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.ticker as ticker
 
-def plot_order(order, reg_dict, src_dict, cal_dict, path=None, \
+def plot_order(order, reg_dict, src_dict, cal_dict, mark_idx=[], \
     reg_labels=False, mark_cals=True, plot_lst=True):
     Time = opt.get_time_detail(order, reg_dict, src_dict)
     fig, ax = plt.subplots()
@@ -21,6 +21,8 @@ def plot_order(order, reg_dict, src_dict, cal_dict, path=None, \
         if mark_cals and (t[0] in cal_dict.keys()):
             # Calibrators
             ax.plot(i, t[1]+t[2]+t[3]+0.1, marker='v', color='r')
+        if i in mark_idx:
+            ax.plot(i, t[1]+t[2]+t[3]+0.1, marker='P', color='r')
         t_wait += t[1]
         t_slew += t[2]
         t_obs += t[3]
