@@ -986,7 +986,7 @@ def get_time_detail(reg_order, regions, sources, lst_i=0, za_t=0, az_t=180):
 def fill_wait(reg_order, regions, sources, exclude_list=[]):
     new_order = reg_order.copy()
     Time = get_time_detail(reg_order, regions, sources)
-    n_max = 0
+    n_added = 0
     search_regs = list(set(regions.keys()) - set(exclude_list))
     added_regs_idx = []
     for i, T in enumerate(Time):
@@ -997,13 +997,11 @@ def fill_wait(reg_order, regions, sources, exclude_list=[]):
                     T[4], T[5], T[6])
                 if (new_t < best_t) and (new_t < T[1] + T[2] + T[3]):
                     best_t = new_t
-                    new_order.insert(i, r)
-                    added_regs_idx.append(i)
-                    print(f'Insert {r} at i={i}')
-                    n_max += 1
-                    break
-        if n_max >= 3:
-            break
+                    new_idx = i + n_added
+                    new_order.insert(new_idx, r)
+                    added_regs_idx.append(new_idx)
+                    print(f'Insert {r} at i={new_idx}')
+                    n_added += 1
     return new_order, added_regs_idx
 
 
