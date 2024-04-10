@@ -35,6 +35,8 @@ class SkyOptimizer:
                 self.new_pop = self.popgen_random
             case 'identical':
                 self.new_pop = self.popgen_identical
+            case 'mutop':
+                self.new_pop = self.popgen_mutop
     
     def set_par_selector(self, selector):
         match selector:
@@ -86,6 +88,12 @@ class SkyOptimizer:
         for _ in range(self.pop_size):
             population.append(self.order.copy())
         return population
+    
+    def popgen_mutop(self):
+        population = []
+        for _ in range(self.pop_size):
+            population.append(self.order.copy())
+        return self.mutation(population)
 
     # Parent selectors
     def parsel_natural(self, population, num):
