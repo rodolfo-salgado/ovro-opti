@@ -137,9 +137,9 @@ class SkyOptimizer:
 
     # Mutation operators
     def mutop_permutate(self, children):
+        n = len(children[0])
         for c in children:
             if self.mut_prob > random.random():
-                n = len(c)
                 mut_num = int(self.mut_rate * n / 2)
                 for _ in range(mut_num):
                     i = random.randint(0, n - 1)
@@ -148,17 +148,17 @@ class SkyOptimizer:
         return children
 
     def mutop_swap(self, children):
+        n = len(children[0])
         for c in children:
             if self.mut_prob > random.random():
-                n = len(c)
                 i = random.randint(0, n - 2)
                 # print('mutation', i, i+1)
                 c[i], c[i+1] = c[i+1], c[i]
         return children
     
     def mutop_localperm(self, children):
+        n = len(children[0])
         for c in children:
-            n = len(c)
             i_len = int(self.mut_rate * n)
             i = random.randint(0, n - i_len)
             chunk = c[i:i+i_len]
