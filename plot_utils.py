@@ -4,13 +4,13 @@ from matplotlib.lines import Line2D
 import matplotlib.ticker as ticker
 
 def plot_order(order, reg_dict, src_dict, cal_dict, mark_idx=[], \
-    reg_labels=False, mark_cals=True, plot_lst=True):
+    reg_labels=False, reg_idx=False, mark_cals=True, plot_lst=True):
     Time = opt.get_time_detail(order, reg_dict, src_dict)
     fig, ax = plt.subplots()
     t_wait = 0
     t_slew = 0
     t_obs = 0
-    reg_label = []
+    reg_labels = []
     for i, t in enumerate(Time):
         # Wait time
         ax.bar(i, t[1], color='k')
@@ -26,7 +26,7 @@ def plot_order(order, reg_dict, src_dict, cal_dict, mark_idx=[], \
         t_wait += t[1]
         t_slew += t[2]
         t_obs += t[3]
-        reg_label.append(t[0])
+        reg_labels.append(f'{t[0]:3}')
     ax.set_xlim(-1, len(Time))
     ax.set_ylabel('Time [h]')
     ax.set_xlabel('Regions')
@@ -36,7 +36,9 @@ def plot_order(order, reg_dict, src_dict, cal_dict, mark_idx=[], \
                 Line2D([], [], color='y', lw=5, label='Slew time'),
                 Line2D([], [], color='c', lw=5, label='Obs. time')]
     if reg_labels:
-        ax.set_xticks(list(range(len(Time))), labels=reg_label)
+        if reg_idx:
+            reg_labels = [x + f' {i:3}' for i, x in enumerate(reg_labels)]
+        ax.set_xticks(list(range(len(Time))), labels=reg_labels)
         ax.tick_params(axis='x', labelsize=6, rotation=45, labelrotation=90)
     if plot_lst:
         ax2 = ax.twinx()
