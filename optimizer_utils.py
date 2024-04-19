@@ -931,10 +931,11 @@ def place_calibrator(regions_order, regions, sources, calibrators, lst_start, \
         za_ls, az_ls = position_last_source_on_region(curr_region, sources, lst)
         az_ls = tel_data.move_in_azimuth(az_t, az_ls)
         za_t, az_t = za_ls, az_ls
+    print(lst, t_last)
     best_time = float('inf')
     best_cal = None
     while best_cal is None:
-        for c in calibrators.keys():
+        for c in ['138', '139']:#calibrators.keys():
         # for c in ['136']:
             new_order = regions_order.copy()
             new_order.insert(last_i, c)
@@ -951,6 +952,56 @@ def place_calibrator(regions_order, regions, sources, calibrators, lst_start, \
     new_order.insert(last_i, best_cal)
     print(f'Insert cal {best_cal} at i={last_i}')
     return new_order
+
+def place_calibrator2(regions_order, regions, sources, calibrators, lst_start, \
+    place_win_len=5,za_t=0, az_t=180):
+    lst = lst_start % 24
+    t_last = 0
+    cal_idx = []
+    cal_n = 0
+    for i, R in enumerate(regions_order):
+        # Get region
+        curr_region = regions[R]
+        # Add wait time
+        t_wait = cu.get_wait_time(curr_region['obs_range'], lst)
+        lst += t_wait
+        # Get region coords
+        za_c, az_c = cu.radec_zaaz(curr_region['ra'], curr_region['dec'], lst)
+        az_c = tel_data.move_in_azimuth(az_t, az_c)
+        # Get slew_time
+        t_slew = tel_data.slew_time(za_t, az_t, za_c, az_c)
+        lst += t_slew
+        t_last += t_wait + t_slew
+        if t_last > 24:
+            cal_idx.append(i - cal_n)
+            cal_n += 1
+            t_last = 0
+        # Get observation time
+        if R in calibrators.keys():
+            t_last = 0
+        t_obs = curr_region['obstime']
+        lst += t_obs
+        t_last += t_obs
+        # Move to last source in region
+        za_ls, az_ls = position_last_source_on_region(curr_region, sources, lst)
+        az_ls = tel_data.move_in_azimuth(az_t, az_ls)
+        za_t, az_t = za_ls, az_ls
+    order_cal = regions_order.copy()
+    prev_order = order_cal.copy()
+    for i in cal_idx:
+        best_time = float('inf')
+        idx_win = range(max(0, i - place_win_len), i + 1)
+        cal_pos = ((x, y) for x in idx_win for y in calibrators.keys())
+        for j, c in cal_pos:
+            new_order = prev_order.copy()
+            new_order.insert(j, c)
+            new_time = compute_total_time(regions, new_order, sources, lst_start)
+            if new_time < best_time:
+                if check_calibrators(new_order[:j], regions, sources, calibrators, lst_start):
+                    best_time = new_time
+                    order_cal = new_order
+        prev_order = order_cal
+    return order_cal
 
 def get_time_detail(reg_order, regions, sources, lst_i=0, za_t=0, az_t=180):
     """Returns total time for an observation cycle (wait + slew + obs).
