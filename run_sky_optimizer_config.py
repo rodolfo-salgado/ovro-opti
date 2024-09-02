@@ -40,4 +40,4 @@ peak_max_n = 5
 # Attempt filling wait times with nearby regions
 fill_wait_times = True
 # Plot region times
-make_plot = True
+make_plot = False
