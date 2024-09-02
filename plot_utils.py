@@ -4,7 +4,7 @@ from matplotlib.lines import Line2D
 import matplotlib.ticker as ticker
 
 def plot_order(order, reg_dict, src_dict, cal_dict, mark_idx=[], \
-    reg_labels=False, reg_idx=False, mark_cals=True, plot_lst=True):
+    reg_labels=False, reg_idx=False, mark_cals=True, plot_lst=True, show_reg_labels=False):
     Time = opt.get_time_detail(order, reg_dict, src_dict)
     fig, ax = plt.subplots()
     t_wait = 0
@@ -35,7 +35,7 @@ def plot_order(order, reg_dict, src_dict, cal_dict, mark_idx=[], \
     legends = [ Line2D([], [], color='k', lw=5, label='Wait time'),
                 Line2D([], [], color='y', lw=5, label='Slew time'),
                 Line2D([], [], color='c', lw=5, label='Obs. time')]
-    if reg_labels:
+    if show_reg_labels:
         if reg_idx:
             reg_labels = [x + f' {i:3}' for i, x in enumerate(reg_labels)]
         ax.set_xticks(list(range(len(Time))), labels=reg_labels)
