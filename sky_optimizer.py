@@ -1,5 +1,6 @@
 import random
 from tqdm import trange
+import numpy as np
 
 class SkyOptimizer:
     def __init__(self, init_order, obj_func, **kwargs):
@@ -7,6 +8,7 @@ class SkyOptimizer:
         self.obj_func = obj_func
         self.optimizer = None
         self.pop = None
+        self.wexp = 0.5
     
     def set_optimizer(self, optimizer, **kwargs):
         match optimizer:
@@ -44,6 +46,8 @@ class SkyOptimizer:
                 self.selection = self.parsel_natural
             case 'rank':
                 self.selection = self.parsel_rank
+            case 'weighted':
+                self.selection = self.parsel_weight
     
     def set_crossover(self, crossover_op):
         match crossover_op:
@@ -110,6 +114,19 @@ class SkyOptimizer:
         for i in range(1, 2*num, 2):
             par1 = pop_rank[i-1]
             par2 = pop_rank[i]
+            parents.append((par1, par2))
+        return parents
+
+    def parsel_weight(self, population, num):
+        values = [self.obj_func(x) for x in population]
+        inverse_values = np.reciprocal(values)
+        adjusted_weights = np.power(inverse_values, self.wexp)
+        weights = adjusted_weights / adjusted_weights.sum()
+        selected = np.random.choice(population, size=num, p=weights)
+        parents = []
+        for i in range(1, 2*len(selected), 2):
+            par1 = selected[i-1]
+            par2 = selected[i]
             parents.append((par1, par2))
         return parents
 
