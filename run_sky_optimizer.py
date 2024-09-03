@@ -56,6 +56,7 @@ def val_func(order):
     return opt.check_calibrators(order, regions, sources, calibrators, lst_start)
 
 if cfg.run_optimizer:
+    print('Running GA Optimizer')
     optimizer_kwargs = cfg.optimizer_kwargs
     optimizer = SkyOptimizer(start_order, obj_func)
     optimizer.set_optimizer('genetic', **optimizer_kwargs)
@@ -64,11 +65,13 @@ else:
     order_opt = start_order.copy()
 
 if cfg.place_calibrators:
+    print('placing calibrator regions')
     while opt.check_calibrators(order_opt, regions, sources, calibrators, lst_start, prnt=False) is False:
         order_opt = opt.place_calibrator2(order_opt, regions, sources, calibrators, lst_start)
         print()
 
 if cfg.permutate_calibrators:
+    print('Permutating calibrator regions')
     perm_size = cfg.cal_perm_size
     perm_iter = cfg.cal_perm_iter
     for idx, reg in enumerate(order_opt):
@@ -76,6 +79,7 @@ if cfg.permutate_calibrators:
             order_opt = opt.local_perm(order_opt, idx, perm_size, perm_iter, obj_func, val_f=val_func)
 
 if cfg.permutate_peaks:
+    print('Permutating peaks')
     perm_size = cfg.peak_perm_size
     perm_iter = cfg.peak_perm_iter
     max_n = cfg.peak_max_n
@@ -85,6 +89,7 @@ if cfg.permutate_peaks:
         order_opt = opt.local_perm(order_opt, idx, perm_size, perm_iter, obj_func, val_f=val_func)
 
 if cfg.fill_wait_times:
+    print('Filling wait times')
     order_opt, added_regs = opt.fill_wait(order_opt, regions, sources, exclude_list=list(calibrators.keys()), output=True)
 
 final_order = order_opt.copy()
@@ -93,9 +98,11 @@ print(f"{final_order=}")
 final_order_lst = opt.get_lst_obs(final_order, regions, sources, lst_i=lst_start)
 
 with open(sky_optimization_results_file, 'wb') as file:
+        print('Saving sky optimization results file')
         pickle.dump(final_order, file, protocol=2)
         pickle.dump(final_order_lst, file, protocol=2)
 
 if cfg.make_plot:
+    print('Plotting results')
     fig, ax = plot_order(final_order, regions, sources, calibrators)
     fig.savefig(f'../plots_regions/plot_{date_tag}.png', dpi=200)
