@@ -1034,6 +1034,34 @@ def get_time_detail(reg_order, regions, sources, lst_i=0, za_t=0, az_t=180):
         Time.append((R, t_wait, t_slew, t_obs, lst_r, za_r, az_r))
     return Time
 
+def get_lst_obs(reg_order, regions, sources, lst_i=0, za_t=0, az_t=180):
+    """Returns total time for an observation cycle (wait + slew + obs).
+    """
+    lst = lst_i % 24
+    lst_list = []
+    for R in reg_order:
+        # Get region
+        curr_region = regions[R]
+        # Add wait time
+        t_wait = cu.get_wait_time(curr_region['obs_range'], lst)
+        lst += t_wait
+        # Get region coords
+        za_c, az_c = cu.radec_zaaz(curr_region['ra'], curr_region['dec'], lst)
+        az_c = tel_data.move_in_azimuth(az_t, az_c)
+        # Get slew_time
+        t_slew = tel_data.slew_time(za_t, az_t, za_c, az_c)
+        lst += t_slew
+        lst_list.append(lst)
+        # Get observation time
+        t_obs = curr_region['obstime']
+        lst += t_obs
+        # Move to last source in region
+        za_ls, az_ls = position_last_source_on_region(curr_region, sources, lst)
+        az_ls = tel_data.move_in_azimuth(az_t, az_ls)
+        za_t, az_t = za_ls, az_ls
+        # Add times
+    return lst_list
+
 def fill_wait(reg_order, regions, sources, exclude_list=[], output=False):
     new_order = reg_order.copy()
     Time = get_time_detail(reg_order, regions, sources)
