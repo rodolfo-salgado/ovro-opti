@@ -7,6 +7,7 @@ import pickle
 import random
 import run_sky_optimizer_config as cfg
 from plot_utils import plot_order
+import os
 
 random.seed(cfg.random_seed)
 
@@ -19,11 +20,11 @@ if sys.argv[1] == 'None':
 
 time_cal = 575. / 3600. # Get from telescope_data
 
-# base_path = os.path.dirname(os.getcwd()) + '/'
-intermediate_results_path = '../intermediate_results/'
-
 cal_list = cfg.cal_list
 
+base_path = os.path.dirname(os.getcwd()) + '/'
+intermediate_results_path = base_path + 'intermediate_results/'
+# intermediate_results_path = '../intermediate_results/'
 region_optimization_results_file = f"{intermediate_results_path}region_optimizer_{date_tag}.dat"
 sky_optimization_results_file = f"{intermediate_results_path}sky_optimizer_{date_tag}.dat"
 
